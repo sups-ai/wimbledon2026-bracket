@@ -1,0 +1,69 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #1a5c2e;
+  --green-dark: #143f20;
+  --green-light: #2a7a3e;
+  --purple: #4b0082;
+  --purple-light: #6a1a9a;
+  --gold: #c9a84c;
+  --gold-light: #e0c070;
+  --bg: #f8f8f4;
+  --white: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666666;
+  --border: #e0ddd5;
+  --error: #c62828;
+  --success: #2d6a4f;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-ui: 'Inter', system-ui, sans-serif;
+}
+
+html, body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+* { -webkit-tap-highlight-color: transparent; }
+
+button, input, select { font-family: var(--font-ui); transition: all 0.15s; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+input:focus { border-color: var(--green) !important; }
+
+.grass-lines {
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 46px,
+    rgba(255,255,255,0.04) 46px, rgba(255,255,255,0.04) 48px
+  );
+}
+
+.match-player:hover { background-color: rgba(26,92,46,0.06) !important; }
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.slide-up { animation: slideUp 0.22s ease-out; }
+
+@keyframes slideDown {
+  from { transform: translate(-50%, -16px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+.toast { animation: slideDown 0.2s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
