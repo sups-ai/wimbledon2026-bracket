@@ -131,7 +131,15 @@ function GateView({ onEnter }) {
               onKeyDown={e => e.key === 'Enter' && submitCode()}
               placeholder="Invite code"
               autoComplete="off"
-              style={{ ...inputStyle, textAlign: 'center', letterSpacing: '2px', border: 'none', borderBottom: `1.5px solid ${err ? C.error : '#ccc8be'}`, borderRadius: 0, background: 'transparent', padding: '12px 0' }}
+              style={{
+                display: 'block', width: '100%', padding: '12px 0',
+                borderTop: 'none', borderLeft: 'none', borderRight: 'none',
+                borderBottom: `1.5px solid ${err ? C.error : '#ccc8be'}`,
+                borderRadius: 0, background: 'transparent',
+                fontSize: '14px', fontFamily: 'var(--font-ui)', boxSizing: 'border-box',
+                textAlign: 'center', letterSpacing: '2px',
+                color: C.text, outline: 'none', marginBottom: '14px',
+              }}
             />
             {err && <p style={{ color: C.error, fontSize: '12px', marginBottom: '12px', textAlign: 'center' }}>{err}</p>}
             <Btn onClick={submitCode} style={{ width: '100%', marginTop: '8px' }}>Enter Challenge →</Btn>
