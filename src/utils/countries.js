@@ -16,7 +16,7 @@ const COUNTRY_MAP = {
   PER: 'PE', ECU: 'EC', URU: 'UY', VEN: 'VE', PAR: 'PY',
   DOM: 'DO', PUR: 'PR', HAI: 'HT', JAM: 'JM', BAH: 'BS',
   TRI: 'TT', BAR: 'BB', BER: 'BM', BOL: 'BO',
-
+ 
   // Europe
   AUT: 'AT', BEL: 'BE', NED: 'NL', DEN: 'DK', SWE: 'SE',
   NOR: 'NO', FIN: 'FI', POL: 'PL', CZE: 'CZ', SVK: 'SK',
@@ -26,20 +26,20 @@ const COUNTRY_MAP = {
   BLR: 'BY', EST: 'EE', LAT: 'LV', LTU: 'LT', GEO: 'GE',
   ARM: 'AM', AZE: 'AZ', CYP: 'CY', MLT: 'MT', LUX: 'LU',
   MON: 'MC', AND: 'AD', LIE: 'LI', ISL: 'IS',
-
+ 
   // Asia & Oceania
   TPE: 'TW', HKG: 'HK', THA: 'TH', PHI: 'PH', INA: 'ID',
   MAS: 'MY', SIN: 'SG', VIE: 'VN', PAK: 'PK', SRI: 'LK',
   BAN: 'BD', KAZ: 'KZ', UZB: 'UZ', TKM: 'TM', KGZ: 'KG',
   TJK: 'TJ', MGL: 'MN', FIJ: 'FJ', SAM: 'WS',
-
+ 
   // Middle East & Africa
   ISR: 'IL', LIB: 'LB', JOR: 'JO', KSA: 'SA', UAE: 'AE',
   QAT: 'QA', KUW: 'KW', BRN: 'BH', OMA: 'OM', IRI: 'IR',
   TUN: 'TN', ALG: 'DZ', MAR: 'MA', EGY: 'EG', NGR: 'NG',
   KEN: 'KE', ZIM: 'ZW', MOZ: 'MZ',
 };
-
+ 
 /**
  * Convert a 3-letter tennis/IOC country code to a 2-letter ISO code.
  * Falls back to first two characters if not in the lookup.
@@ -49,7 +49,7 @@ export function toISO2(code3) {
   const upper = code3.toUpperCase().trim();
   return COUNTRY_MAP[upper] || upper.slice(0, 2);
 }
-
+ 
 /**
  * Convert a 2-letter ISO country code to a flag emoji.
  * Works by mapping each letter to a Unicode Regional Indicator Symbol.
@@ -61,7 +61,7 @@ export function isoToFlag(iso2) {
     iso2.codePointAt(1) - 65 + 0x1F1E6,
   );
 }
-
+ 
 /**
  * Convenience: 3-letter tennis code → flag emoji in one call.
  * Returns empty string for null/undefined input.
@@ -70,3 +70,4 @@ export function countryFlag(code3) {
   const iso = toISO2(code3);
   return iso ? isoToFlag(iso) : '';
 }
+ 
