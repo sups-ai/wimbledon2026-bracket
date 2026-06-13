@@ -1,6 +1,6 @@
 // ─── Invite codes ───────────────────────────────────────────────────────────
-export const INVITE_CODE = 'ITHF2026WBLC';
-export const DEMO_CODE   = 'WBLC2026TEST';
+export const INVITE_CODE = 'ITHF2026ELC';
+export const DEMO_CODE   = 'Test2026';
 
 // ─── Key dates (all stored as UTC) ──────────────────────────────────────────
 // Picks open: draw released June 26 — matchups populate automatically
@@ -41,8 +41,14 @@ export const ROUND_POINTS = {
  */
 export const CHAMPION_BONUS = 320;
 
-/** +5 for each match where the correct final-set score is predicted */
+/** +5 for each match where the correct final-set games tally is predicted */
 export const FINAL_SET_BONUS = 5;
+
+/**
+ * Valid final-set game tallies for a Wimbledon singles match.
+ * 12 is impossible: at 6–6 the set goes to a 10-point tiebreak (→ 7–6 = 13 games).
+ */
+export const FINAL_SET_VALID = [6, 7, 8, 9, 10, 11, 13];
 
 /** Redraw penalty: deducted from total score when redraw is used */
 export const REDRAW_PENALTY = 100;
@@ -51,8 +57,8 @@ export const REDRAW_PENALTY = 100;
 export const REDRAW_ROUNDS = ['R16', 'QF', 'SF', 'Final'];
 
 // ─── Draws ───────────────────────────────────────────────────────────────────
+// ATP / WTA only — no gender references anywhere in the product.
 export const DRAWS = ['ATP', 'WTA'];
-export const DRAW_LABELS = { ATP: "Men's Singles", WTA: "Women's Singles" };
 
 // ─── Roles ───────────────────────────────────────────────────────────────────
 export const ROLES = ['ELC Member', 'ITHF Staff', 'Guest'];
@@ -62,11 +68,11 @@ export const C = {
   green:       '#1a5c2e',
   greenDark:   '#143f20',
   greenLight:  '#2a7a3e',
-  purple:      '#4b0082',
+  purple:      '#5c1e7e',
   purpleLight: '#6a1a9a',
   gold:        '#c9a84c',
   goldLight:   '#e0c070',
-  bg:          '#f8f8f4',
+  bg:          '#f9f8f5',
   white:       '#ffffff',
   text:        '#1a1a1a',
   muted:       '#666666',
