@@ -1,5 +1,5 @@
 import { ROUNDS, REDRAW_ROUNDS } from '../constants';
-
+ 
 /**
  * Core bracket function. Takes R1 matchups (object keyed by matchId) and
  * user picks for all rounds, then:
@@ -16,17 +16,17 @@ import { ROUNDS, REDRAW_ROUNDS } from '../constants';
 export function validateAndBuildAll(r1Matchups, rawPicks) {
   let prevMatchups = r1Matchups;           // object: { matchId → { id, p1, p2 } }
   let prevPicks    = rawPicks.R1 || {};    // object: { matchId → playerName }
-
+ 
   const allMatchups    = { R1: r1Matchups };
   const validatedPicks = { R1: rawPicks.R1 || {} };
-
+ 
   const subRounds = ['R2', 'R3', 'R16', 'QF', 'SF', 'Final'];
-
+ 
   for (const round of subRounds) {
     // --- Build this round's matchups ---
     const sortedIds    = Object.keys(prevMatchups).sort((a, b) => +a - +b);
     const currentMatchups = {};
-
+ 
     for (let i = 0; i < sortedIds.length; i += 2) {
       const id1 = sortedIds[i];
       const id2 = sortedIds[i + 1];
@@ -39,11 +39,11 @@ export function validateAndBuildAll(r1Matchups, rawPicks) {
       };
     }
     allMatchups[round] = currentMatchups;
-
+ 
     // --- Validate picks for this round ---
     const rawRoundPicks   = rawPicks[round] || {};
     const validRoundPicks = {};
-
+ 
     for (const [matchId, pick] of Object.entries(rawRoundPicks)) {
       const matchup = currentMatchups[matchId];
       if (matchup && pick && (pick === matchup.p1 || pick === matchup.p2)) {
@@ -52,15 +52,15 @@ export function validateAndBuildAll(r1Matchups, rawPicks) {
       // else: pick is stale — drop it silently
     }
     validatedPicks[round] = validRoundPicks;
-
+ 
     // Advance for next round
     prevMatchups = currentMatchups;
     prevPicks    = validRoundPicks;
   }
-
+ 
   return { allMatchups, validatedPicks };
 }
-
+ 
 /**
  * How many matches are in each round for a 128-player draw.
  * Used to show "N of 64 picked" progress.
@@ -71,7 +71,7 @@ export function roundPickedCount(picks, allMatchups, round) {
   const picked  = Object.values(picks[round] || {}).filter(Boolean).length;
   return { total, picked };
 }
-
+ 
 /**
  * Given the current picks object, apply a redraw: clear R16–Final picks
  * but preserve R1–R3.
@@ -83,7 +83,7 @@ export function applyRedraw(picks) {
   }
   return next;
 }
-
+ 
 /**
  * Completion summary for a single draw.
  * Returns { picked, total, complete } across all rounds, using freshly-built
@@ -99,7 +99,7 @@ export function drawCompletion(r1Matchups, picks) {
   }
   return { picked, total, complete: total > 0 && picked === total };
 }
-
+ 
 /**
  * Parse a seed string from the API into a numeric priority.
  * Lower number = stronger seed = wins the auto-fill.
@@ -111,7 +111,7 @@ function seedPriority(seedStr) {
   const n = parseInt(seedStr, 10);
   return Number.isFinite(n) ? n : Infinity;
 }
-
+ 
 /**
  * Auto-fill an entire draw by picking a winner for every match, round by round.
  * Cascades: R1 is filled first, then each subsequent round's matchups are built
@@ -129,7 +129,7 @@ export function autoFillDraw(r1Matchups, mode = 'random', playerMeta = {}) {
     const opts = [m.p1, m.p2].filter(Boolean);
     if (opts.length === 0) return null;
     if (opts.length === 1) return opts[0];
-
+ 
     if (mode === 'seed') {
       const s1 = seedPriority(playerMeta[m.p1]?.seed);
       const s2 = seedPriority(playerMeta[m.p2]?.seed);
@@ -138,13 +138,13 @@ export function autoFillDraw(r1Matchups, mode = 'random', playerMeta = {}) {
     }
     return opts[Math.floor(Math.random() * opts.length)];
   };
-
+ 
   const picks = { R1: {} };
   for (const [id, m] of Object.entries(r1Matchups || {})) {
     const w = pickWinner(m);
     if (w) picks.R1[id] = w;
   }
-
+ 
   const subRounds = ['R2', 'R3', 'R16', 'QF', 'SF', 'Final'];
   for (const round of subRounds) {
     const { allMatchups } = validateAndBuildAll(r1Matchups || {}, picks);
@@ -155,6 +155,7 @@ export function autoFillDraw(r1Matchups, mode = 'random', playerMeta = {}) {
       if (w) picks[round][id] = w;
     }
   }
-
+ 
   return picks;
 }
+ 
