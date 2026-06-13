@@ -8,6 +8,7 @@ import {
   C, SCRIPT_URL,
 } from './constants';
 import { validateAndBuildAll, roundPickedCount, applyRedraw, drawCompletion, autoFillDraw } from './utils/bracket';
+import { countryFlag } from './utils/countries';
 import { loadSession, saveSession, clearSession } from './utils/storage';
 
 // ─── Time helpers ─────────────────────────────────────────────────────────────
@@ -25,6 +26,32 @@ function formatCountdown(target, now) {
 }
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
+
+/**
+ * Build a flat lookup of player metadata from R1 matchups.
+ * { "Jannik Sinner": { seed: "1", country: "ITA" }, ... }
+ * Used for seed display, flag emoji, and fill-by-seed.
+ */
+function buildPlayerMeta(r1Matchups) {
+  const meta = {};
+  for (const drawMatchups of Object.values(r1Matchups || {})) {
+    for (const m of Object.values(drawMatchups || {})) {
+      if (m.p1) meta[m.p1] = { seed: m.seed1 || null, country: m.country1 || null };
+      if (m.p2) meta[m.p2] = { seed: m.seed2 || null, country: m.country2 || null };
+    }
+  }
+  return meta;
+}
+
+/**
+ * Format a seed for display: numeric seeds → "[3]", special → "(WC)", etc.
+ */
+function formatSeed(seed) {
+  if (!seed) return null;
+  const n = parseInt(seed, 10);
+  if (Number.isFinite(n)) return `[${n}]`;
+  return `(${seed})`;
+}
 
 function GreenHeader({ eyebrow, title, subtitle, children }) {
   return (
@@ -203,7 +230,7 @@ function RegisterView({ onRegister }) {
 
 // ─── MATCH CARD ───────────────────────────────────────────────────────────────
 
-function MatchCard({ matchup, picked, onPick, result, disabled }) {
+function MatchCard({ matchup, picked, onPick, result, disabled, playerMeta }) {
   const { id, p1, p2 } = matchup;
   const players = [p1, p2];
   const isLocked = disabled;
@@ -215,6 +242,9 @@ function MatchCard({ matchup, picked, onPick, result, disabled }) {
         const isWinner   = result  === player && !!player;
         const isLoser    = result  && result !== player;
         const noPlayer   = !player;
+        const meta       = player ? (playerMeta || {})[player] : null;
+        const seed       = meta ? formatSeed(meta.seed) : null;
+        const flag       = meta ? countryFlag(meta.country) : '';
 
         return (
           <div
@@ -241,12 +271,17 @@ function MatchCard({ matchup, picked, onPick, result, disabled }) {
               {(isSelected || isWinner) && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: C.white }} />}
             </div>
 
+            {/* Flag */}
+            {flag && <span style={{ fontSize: '15px', flexShrink: 0, lineHeight: 1 }}>{flag}</span>}
+
+            {/* Seed + Player name */}
             <span style={{
               fontSize: '14px', fontWeight: isSelected ? '600' : '400',
               color: noPlayer ? C.subtle : C.text,
               flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               fontStyle: noPlayer ? 'italic' : 'normal',
             }}>
+              {seed && <span style={{ color: C.muted, fontWeight: '700', fontSize: '12px', marginRight: '4px' }}>{seed}</span>}
               {player || 'TBD — complete earlier picks first'}
             </span>
 
@@ -411,6 +446,7 @@ function BracketPickerView({
   const drawR1    = r1Matchups[activeDraw] || {};
   const drawPicks = picks[activeDraw] || {};
   const drawResults = results[activeDraw] || {};
+  const playerMeta = buildPlayerMeta(r1Matchups);
 
   // Build matchups + validate picks for the active draw (fast, pure)
   const { allMatchups, validatedPicks } = validateAndBuildAll(drawR1, drawPicks);
@@ -454,11 +490,12 @@ function BracketPickerView({
     }));
   }
 
-  function handleAutoFill() {
+  function handleAutoFill(mode = 'random') {
     if (Object.keys(drawR1).length === 0) return;
+    const label = mode === 'seed' ? 'seed-based' : 'random';
     const hasPicks = ROUNDS.some(r => Object.keys((picks[activeDraw] || {})[r] || {}).length > 0);
-    if (hasPicks && !window.confirm(`Replace all your current ${activeDraw} picks with a random fill? You can still change any of them.`)) return;
-    const filled = autoFillDraw(drawR1, 'random');
+    if (hasPicks && !window.confirm(`Replace all your current ${activeDraw} picks with a ${label} fill? You can still change any of them.`)) return;
+    const filled = autoFillDraw(drawR1, mode, playerMeta);
     setPicks(prev => ({ ...prev, [activeDraw]: filled }));
     setActiveRound('Final');
   }
@@ -619,17 +656,25 @@ function BracketPickerView({
         </div>
 
         {/* Auto-fill (pre-submission only) */}
-        {!submitted && !picksLocked && activeMatchupsList.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: C.muted, fontWeight: '600' }}>Auto-fill {activeDraw}:</span>
-            <button onClick={handleAutoFill} style={{ padding: '6px 12px', borderRadius: '7px', border: `1.5px solid ${C.green}`, background: `${C.green}0c`, color: C.green, fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
-              🎲 Fill randomly
-            </button>
-            <button disabled title="Available once seed data is loaded (June 26)" style={{ padding: '6px 12px', borderRadius: '7px', border: `1.5px solid ${C.border}`, background: C.bg, color: C.subtle, fontSize: '12px', fontWeight: '700', cursor: 'not-allowed', fontFamily: 'var(--font-ui)' }}>
-              Fill by seed
-            </button>
-          </div>
-        )}
+        {!submitted && !picksLocked && activeMatchupsList.length > 0 && (() => {
+          const hasSeeds = Object.values(drawR1).some(m => m.seed1 || m.seed2);
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12px', color: C.muted, fontWeight: '600' }}>Auto-fill {activeDraw}:</span>
+              <button onClick={() => handleAutoFill('random')} style={{ padding: '6px 12px', borderRadius: '7px', border: `1.5px solid ${C.green}`, background: `${C.green}0c`, color: C.green, fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: 'var(--font-ui)' }}>
+                🎲 Fill randomly
+              </button>
+              <button
+                onClick={hasSeeds ? () => handleAutoFill('seed') : undefined}
+                disabled={!hasSeeds}
+                title={hasSeeds ? 'Higher seed advances each round' : 'Available once seed data is loaded (June 26)'}
+                style={{ padding: '6px 12px', borderRadius: '7px', border: `1.5px solid ${hasSeeds ? C.gold : C.border}`, background: hasSeeds ? `${C.gold}14` : C.bg, color: hasSeeds ? C.gold : C.subtle, fontSize: '12px', fontWeight: '700', cursor: hasSeeds ? 'pointer' : 'not-allowed', fontFamily: 'var(--font-ui)' }}
+              >
+                🏆 Fill by seed
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Round progress bar */}
         {(() => {
@@ -673,6 +718,7 @@ function BracketPickerView({
               onPick={(matchId, player) => handlePick(activeRound, matchId, player)}
               result={activeResults[matchup.id]}
               disabled={isRoundLocked(activeRound)}
+              playerMeta={playerMeta}
             />
           ))
         )}
