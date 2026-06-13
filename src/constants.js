@@ -61,7 +61,7 @@ export const REDRAW_ROUNDS = ['R16', 'QF', 'SF', 'Final'];
 export const DRAWS = ['ATP', 'WTA'];
 
 // ─── Roles ───────────────────────────────────────────────────────────────────
-export const ROLES = ['ELC Member', 'ITHF Staff', 'Guest'];
+export const ROLES = ['ELC Member', 'ITHF Board', 'ITHF Staff', 'Friend of ITHF'];
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 export const C = {
