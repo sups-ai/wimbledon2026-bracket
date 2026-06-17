@@ -1,18 +1,1002 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#1a5c2e" />
-    <meta name="description" content="Wimbledon 2026 Bracket Challenge — ITHF Emerging Leaders Council" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet" />
-    <title>Wimbledon 2026 · Bracket Challenge</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#FFFFFF" />
+<title>Wimbledon 2026 · Bracket Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --paper:#FFFFFF; --ink:#16181B; --soft:#6A7178; --faint:#9AA0A6;
+  --grass:#1A5C2E; --grass-soft:#EAF3ED; --grass-deep:#103C1E;
+  --royal:#4B2E83; --royal-soft:#F0ECF7;
+  --gold:#B08D2D; --gold-soft:#F7F0DE;
+  --err:#C0392B;
+  --line:rgba(20,24,27,.09); --line2:rgba(20,24,27,.05);
+  --disp:'Bricolage Grotesque',system-ui,sans-serif;
+  --ui:'DM Sans',system-ui,sans-serif;
+  --r:12px;
+}
+html,body{height:100%}
+body{font-family:var(--ui);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45}
+.disp{font-family:var(--disp);letter-spacing:-.01em}
+button{font-family:var(--ui)}
+
+/* GATE */
+.gate{position:fixed;inset:0;z-index:300;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:28px;overflow:hidden;transition:opacity .5s ease,visibility .5s}
+.gate.gone{opacity:0;visibility:hidden;pointer-events:none}
+.gate-grid{position:absolute;inset:0;pointer-events:none}
+.gate-inner{position:relative;width:100%;max-width:392px}
+.gate-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--royal)}
+.accent-line{width:42px;height:3px;border-radius:3px;margin:18px 0 16px;background:linear-gradient(90deg,var(--grass),var(--royal) 55%,var(--gold))}
+.gate-title{font-family:var(--disp);font-weight:700;font-size:clamp(46px,14vw,62px);line-height:.92;color:var(--ink)}
+.gate-title .yr{color:var(--gold)}
+.gate-label{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--royal);margin-top:14px}
+.gate-sub{font-size:13px;font-weight:500;color:var(--soft);margin-top:8px;max-width:330px;line-height:1.55}
+.gate-form{margin-top:30px;display:flex;flex-direction:column;gap:11px}
+.ginput{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 15px;color:var(--ink);font-family:var(--ui);font-size:15px;outline:none;transition:border-color .16s,box-shadow .16s}
+.ginput::placeholder{color:var(--faint)}
+.ginput:focus{border-color:var(--grass);box-shadow:0 0 0 3px var(--grass-soft)}
+select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AA0A6' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 15px center}
+.hidden-fields{display:none;flex-direction:column;gap:11px}
+.hidden-fields.show{display:flex;animation:fade .32s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.genter{margin-top:5px;width:100%;background:var(--grass);color:#fff;border:none;border-radius:10px;padding:15px;font-weight:700;font-size:14px;letter-spacing:.01em;cursor:pointer;transition:filter .14s,transform .14s}
+.genter:hover{filter:brightness(1.08)} .genter:active{transform:translateY(1px)}
+.gerr{font-size:12px;color:var(--err);min-height:15px;margin-top:1px}
+.gfoot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.7;color:var(--soft)}
+.gfoot strong{color:var(--ink);font-weight:600}
+.pw-wrap{position:relative;display:flex;align-items:center}
+.pw-input{-webkit-text-security:disc;text-security:disc;padding-right:64px}
+.pw-input.reveal{-webkit-text-security:none;text-security:none}
+.pw-toggle{position:absolute;right:6px;background:none;border:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grass);cursor:pointer;padding:8px 8px}
+.pw-toggle:hover{opacity:.7}
+.credit{text-align:center;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--faint);padding:22px 0 8px}
+.gate .credit{position:absolute;bottom:16px;left:0;right:0;padding:0}
+.admin{position:fixed;inset:0;z-index:300;background:var(--paper);display:none;align-items:flex-start;justify-content:center;padding:42px 28px;overflow-y:auto}
+.admin.show{display:flex}
+.admin-inner{position:relative;width:100%;max-width:480px;padding-bottom:40px}
+.admin-section{margin-top:10px}
+.brow{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.brow.off{opacity:.55}
+.brow .bi{flex:1;min-width:0}
+.brow .bn{font-weight:700;font-size:14px}
+.brow .boff{font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+.brow .bmeta{font-size:11.5px;color:var(--soft);margin-top:2px}
+.brow .bmeta b{color:var(--ink);font-weight:700}
+.brow .bedit{background:none;border:1px solid var(--line);border-radius:7px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--grass-deep);cursor:pointer}
+.brow .bedit:hover{border-color:var(--grass)}
+.admin-add{width:100%;margin-top:6px;background:var(--grass);color:#fff;border:none;border-radius:9px;padding:13px;font-weight:700;font-size:13px;cursor:pointer}
+.admin-add:hover{filter:brightness(1.08)}
+.afield{margin:10px 0}
+.afield label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);margin-bottom:5px}
+.afield .ginput{width:100%}
+.demo-tag{display:none;margin-top:10px;font-size:11px;color:var(--royal);background:var(--royal-soft);border-radius:7px;padding:7px 10px}
+.demo-tag.show{display:block}
+
+/* HEADER */
+.app{opacity:0;transition:opacity .5s ease .12s}
+.app.in{opacity:1}
+.hdr{position:sticky;top:0;z-index:90;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px 9px;max-width:1180px;margin:0 auto}
+.hb-name{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink);white-space:nowrap}
+.hb-name .yr{color:var(--gold)}
+.hb-sub{font-size:10.5px;color:var(--soft);margin-top:1px}
+.hb-sub em{font-style:normal;color:var(--royal);font-weight:600}
+.hscore{text-align:right;flex-shrink:0}
+.hscore .n{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--grass);line-height:1}
+.hscore .l{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint)}
+.hnav{display:flex;gap:2px;padding:0 14px;max-width:1180px;margin:0 auto}
+.tab{background:none;border:none;font-size:13px;font-weight:600;color:var(--faint);padding:11px 12px 12px;cursor:pointer;border-bottom:2px solid transparent;transition:color .14s,border-color .14s}
+.tab.on{color:var(--ink);border-bottom-color:var(--grass)}
+.tab:hover:not(.on){color:var(--soft)}
+
+/* SUBBAR */
+.subbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;max-width:1180px;margin:0 auto;flex-wrap:wrap}
+.draws{display:inline-flex;background:#F3F4F2;border-radius:10px;padding:3px}
+.draw{background:none;border:none;font-weight:600;font-size:12.5px;color:var(--soft);padding:8px 18px;border-radius:7px;cursor:pointer;transition:all .16s;display:flex;align-items:center;gap:8px}
+.draw.on{background:#fff;color:var(--grass);box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.draw .dc{font-size:10.5px;color:var(--faint);font-weight:500}
+.draw.on .dc{color:var(--grass)}
+.lockstrip{font-size:11.5px;color:var(--soft)}
+.lockstrip strong{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* BANNERS */
+.banner{max-width:1180px;margin:0 auto;padding:0 18px}
+.banner-in{border-radius:9px;padding:9px 12px;font-size:11.5px;margin-top:2px}
+.banner-sample{background:var(--gold-soft);border:1px solid #E9D8A8;color:#7A5E14}
+.banner-locked{background:var(--royal-soft);border:1px solid #D9CBEF;color:var(--royal)}
+.banner-done{background:var(--grass-soft);border:1px solid #C6E2CF;color:var(--grass-deep);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.banner b{font-weight:700}
+.mini-btn{background:var(--grass);color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* ACCORDION */
+.wrap{max-width:1180px;margin:0 auto;padding:14px 18px 120px}
+.afill-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:11px 13px;border:1px dashed rgba(26,92,46,.35);border-radius:10px;background:var(--grass-soft)}
+.afill-bar .q{font-size:12.5px;color:var(--grass-deep);flex:1;min-width:170px}
+.afill-bar .q b{font-weight:700}
+.afill-bar button{background:#fff;color:var(--grass-deep);border:1px solid #C6E2CF;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:border-color .14s}
+.afill-bar button:hover{border-color:var(--grass)}
+.pg{display:none} .pg.on{display:block}
+.acc{border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden;background:#fff;transition:border-color .16s}
+.acc.active{border-color:rgba(26,92,46,.32);box-shadow:0 2px 14px rgba(16,60,30,.06)}
+.acc.locked{opacity:.58}
+.ahead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
+.acc.locked .ahead{cursor:not-allowed}
+.ah-l{display:flex;align-items:baseline;gap:11px;min-width:0}
+.ah-rnd{font-family:var(--disp);font-weight:700;font-size:16px;color:var(--ink)}
+.ah-pts{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--royal);background:var(--royal-soft);padding:3px 7px;border-radius:5px;white-space:nowrap}
+.ah-r{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.ah-stat{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--soft)}
+.ah-stat.done{color:var(--grass)} .ah-stat.lk{color:var(--faint);font-weight:500;font-size:11px}
+.ah-stat .ck{color:var(--grass);margin-left:3px}
+.arr{width:18px;height:18px;display:grid;place-items:center;color:var(--faint);transition:transform .25s}
+.acc.open .arr{transform:rotate(180deg)}
+.summary{padding:0 16px 14px;display:none;flex-direction:column;gap:4px}
+.acc.collapsed-done .summary{display:flex}
+.srow{display:flex;align-items:center;gap:9px;font-size:13px;padding:4px 0;border-top:1px solid var(--line2)}
+.srow:first-child{border-top:none}
+.srow .fl{font-size:15px;width:20px;text-align:center}
+.srow .nm{flex:1;color:var(--ink);font-weight:500}
+.srow .nm .sd{color:var(--faint);font-weight:600;font-size:11px;margin-right:5px}
+.srow .ck{color:var(--grass);font-size:12px}
+.srow.more{color:var(--faint);font-style:italic;font-size:11.5px;border-top:none;padding-top:2px}
+.abody{display:none;padding:6px 12px 14px;gap:9px;flex-direction:column}
+.acc.open .abody{display:flex}
+.lockmsg{display:none;padding:0 16px 16px;font-size:12px;color:var(--faint)}
+.acc.locked .lockmsg{display:block}
+.acc.locked .arr{display:none}
+
+/* MATCH CARD */
+.match{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;transition:border-color .14s}
+.match:hover{border-color:rgba(20,24,27,.18)}
+.slot{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative;min-height:48px;transition:background .12s}
+.slot+.slot{border-top:1px solid var(--line)}
+.slot:hover:not(.tbd):not(.fixed){background:#FBFBFA}
+.slot.sel{background:var(--grass-soft)}
+.slot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .14s}
+.slot.sel::before{background:var(--grass)}
+.slot.win::before{background:var(--gold)}
+.slot.win{background:var(--gold-soft)}
+.s-sd{font-size:11px;font-weight:600;color:var(--faint);width:18px;text-align:center;flex-shrink:0;font-variant-numeric:tabular-nums}
+.s-fl{font-size:17px;flex-shrink:0;width:20px;text-align:center}
+.s-nm{flex:1;font-size:14.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot.sel .s-nm{color:var(--grass-deep);font-weight:600}
+.slot.win .s-nm{color:var(--gold);font-weight:700}
+.slot.out{opacity:.4} .slot.out .s-nm{text-decoration:line-through}
+.s-pick{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:grid;place-items:center;transition:all .14s}
+.slot.sel .s-pick{border-color:var(--grass);background:var(--grass)}
+.slot.sel .s-pick::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+.slot.tbd{cursor:default} .slot.tbd .s-nm{color:var(--faint);font-style:italic;font-weight:400} .slot.tbd .s-pick{display:none}
+.slot.fixed{cursor:default}
+.s-res{font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+
+/* CHAMP */
+.champ{margin-top:4px;border:1.5px solid var(--gold);border-radius:var(--r);background:linear-gradient(160deg,var(--gold-soft),#fff 70%);padding:20px;text-align:center}
+.champ .cl{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--gold);font-weight:700}
+.champ .ct{font-size:30px;margin:6px 0 4px}
+.champ .cn{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--grass-deep)}
+.champ .cn.empty{color:var(--faint);font-weight:500;font-style:italic;font-size:15px}
+
+/* SUBMIT BAR */
+.sbar{position:fixed;left:0;right:0;bottom:0;z-index:95;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 18px;display:none}
+.sbar.show{display:block}
+.sbar-in{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.sbar .ss{font-size:12.5px;color:var(--soft)} .sbar .ss strong{color:var(--ink);font-weight:700}
+.bsub{font-weight:700;font-size:13px;background:var(--grass);color:#fff;border:none;border-radius:9px;padding:12px 22px;cursor:pointer;transition:filter .14s,transform .14s}
+.bsub:hover{filter:brightness(1.08)} .bsub:active{transform:translateY(1px)}
+.bsub:disabled{background:var(--faint);cursor:not-allowed}
+
+/* LEADERBOARD */
+.lbw{max-width:640px;margin:0 auto;padding:16px 18px 80px}
+.lbtabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}
+.lbtab{background:none;border:none;font-size:12.5px;font-weight:600;color:var(--faint);padding:10px 13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.lbtab.on{color:var(--ink);border-bottom-color:var(--grass)}
+.lb-meta{font-size:11px;color:var(--faint);margin-bottom:10px;display:flex;justify-content:space-between}
+.lbr{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:border-color .14s,background .14s}
+.lbr:hover{border-color:rgba(20,24,27,.2)}
+.lbr.me{border-color:var(--grass);background:var(--grass-soft)}
+.lrk{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--faint);width:22px;text-align:center;flex-shrink:0}
+.lbr:nth-child(1) .lrk{color:var(--gold)}
+.lav{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.li{flex:1;min-width:0}
+.ln{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lsu{font-size:11px;color:var(--faint);margin-top:1px}
+.lp{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink);text-align:right}
+.lp .lpl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-family:var(--ui);font-weight:600}
+.lb-empty{font-size:13px;color:var(--soft);text-align:center;padding:30px 10px}
+
+/* RULES */
+.rlw{max-width:600px;margin:0 auto;padding:18px;line-height:1.65}
+.rl-h{font-family:var(--disp);font-weight:700;font-size:17px;margin:22px 0 10px;color:var(--ink)}
+.rl-h:first-child{margin-top:0}
+.rl-p{font-size:13.5px;color:var(--soft);margin-bottom:10px}
+.sct{width:100%;border-collapse:collapse;margin:8px 0 4px}
+.sct td{padding:9px 4px;border-bottom:1px solid var(--line);font-size:13.5px}
+.sct td:last-child{text-align:right;font-family:var(--disp);font-weight:700;color:var(--grass)}
+.sct tr:last-child td{border-bottom:none}
+.rl-note{background:#F7F8F7;border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.5px;color:var(--soft);margin-top:8px}
+.rl-note b{color:var(--ink)}
+
+/* MODAL */
+.mbk{position:fixed;inset:0;background:rgba(15,20,18,.42);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;padding:0}
+.mbk.open{opacity:1;pointer-events:all}
+.mdl{background:#fff;border-radius:16px 16px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));width:100%;max-width:520px;transform:translateY(20px);transition:transform .26s;max-height:86vh;overflow-y:auto}
+.mbk.open .mdl{transform:translateY(0)}
+@media(min-width:560px){.mbk{align-items:center;padding:20px}.mdl{border-radius:16px}}
+.mdl h3{font-family:var(--disp);font-weight:700;font-size:19px;margin-bottom:4px}
+.mdl .msub{font-size:12.5px;color:var(--soft);margin-bottom:16px}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);font-size:13.5px}
+.mrow:last-of-type{border-bottom:none}
+.mrow .rn{color:var(--faint);font-size:12px}
+.mrow .rp{font-weight:600} .mrow .rp.miss{color:var(--err);font-style:italic;font-weight:500}
+.mrow .rp.correct{color:var(--grass)} .mrow .rp.wrong{color:var(--err)}
+.mact{display:flex;gap:9px;margin-top:18px}
+.bcf{flex:1;background:var(--grass);color:#fff;border:none;border-radius:9px;padding:13px;font-weight:700;font-size:13px;cursor:pointer}
+.bcf:disabled{background:var(--faint);cursor:not-allowed}
+.bcc{background:none;border:1px solid var(--line);border-radius:9px;color:var(--soft);padding:13px 18px;font-weight:600;font-size:13px;cursor:pointer}
+.mwarn{background:#FDF3F2;border:1px solid #F2D6D2;border-radius:9px;padding:11px 13px;font-size:12.5px;color:var(--err);margin-bottom:12px;line-height:1.5}
+.mfield{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
+.mfield label{font-size:12.5px;color:var(--soft);flex:1}
+.mfield input{width:64px;border:1px solid var(--line);border-radius:7px;padding:8px;font-family:var(--ui);font-size:15px;text-align:center;outline:none}
+.mfield input:focus{border-color:var(--grass)}
+
+/* TOAST */
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:600;background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--err)}
+
+@media(min-width:560px){.wrap{padding-left:24px;padding-right:24px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- GATE -->
+<div class="gate" id="gate">
+  <svg class="gate-grid" preserveAspectRatio="none" viewBox="0 0 400 800">
+    <g stroke="rgba(20,24,27,.045)" stroke-width="1" fill="none">
+      <path d="M30 120 H120 V240 H210"/><path d="M30 360 H120 V240"/>
+      <path d="M30 520 H120 V640 H210"/><path d="M30 760 H120 V640"/>
+      <path d="M210 240 H300 V440 H380"/><path d="M210 640 H300 V440"/>
+    </g>
+  </svg>
+  <div class="gate-inner">
+    <div class="gate-eyebrow" id="gEyebrow">ITHF · Emerging Leaders Council</div>
+    <div class="accent-line"></div>
+    <h1 class="gate-title">Wimbledon<span class="yr">'26</span></h1>
+    <div class="gate-label">Bracket Challenge</div>
+    <p class="gate-sub">Pick winners through the champion for both the ATP &amp; WTA draws. Picks open Fri June 26 and lock Mon June 29 at 6 AM ET.</p>
+    <div class="gate-form">
+      <div class="pw-wrap">
+        <input class="ginput pw-input" id="gCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+        <button type="button" class="pw-toggle" id="pwToggle">Show</button>
+      </div>
+      <div class="hidden-fields" id="moreFields">
+        <input class="ginput" id="gName" type="text" placeholder="Full name" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore />
+        <select class="ginput" id="gRole">
+          <option value="" disabled selected>Role / affiliation</option>
+        </select>
+      </div>
+      <div class="gerr" id="gErr"></div>
+      <button class="genter" id="gBtn">Continue</button>
+    </div>
+    <div class="demo-tag" id="demoTag">Demo mode · sample draw · entries are not saved.</div>
+    <div class="gfoot">Access restricted to ITHF staff, board &amp; ELC members. Contact the ELC for your invite code.</div>
+  </div>
+  <div class="credit">downtheline™</div>
+</div>
+
+<!-- ADMIN -->
+<div class="admin" id="admin">
+  <div class="admin-inner">
+    <div class="gate-eyebrow" style="color:var(--gold)">downtheline · admin</div>
+    <div class="accent-line"></div>
+    <h1 class="gate-title" style="font-size:clamp(34px,9vw,46px)">Brackets</h1>
+    <div id="adminGate" class="admin-section">
+      <p class="gate-sub">Enter the admin code to create and manage brackets.</p>
+      <div class="gate-form">
+        <div class="pw-wrap">
+          <input class="ginput pw-input" id="adminCode" type="text" placeholder="Admin code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+          <button type="button" class="pw-toggle" id="adminPwToggle">Show</button>
+        </div>
+        <div class="gerr" id="adminErr"></div>
+        <button class="genter" id="adminBtn">Unlock</button>
+      </div>
+    </div>
+    <div id="adminPanel" class="admin-section" style="display:none">
+      <div id="bracketList"></div>
+      <button class="admin-add" id="addBracketBtn">+ New bracket</button>
+    </div>
+    <div class="credit">downtheline™</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <header class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hb-name">Wimbledon <span class="yr">'26</span></div>
+        <div class="hb-sub" id="hbSub">Presented by the <em>Emerging Leaders Council</em> · Bracket Challenge for ITHF &amp; Friends</div>
+      </div>
+      <div class="hscore"><div class="n" id="score">0</div><div class="l">points</div></div>
+    </div>
+    <nav class="hnav">
+      <button class="tab on" data-pg="bracket">Bracket</button>
+      <button class="tab" data-pg="leaderboard">Leaderboard</button>
+      <button class="tab" data-pg="rules">Rules</button>
+    </nav>
+  </header>
+
+  <!-- BRACKET PAGE -->
+  <div class="pg on" id="pg-bracket">
+    <div class="subbar">
+      <div class="draws">
+        <button class="draw on" data-draw="ATP"><span>ATP</span><span class="dc" id="dc-ATP">0/127</span></button>
+        <button class="draw" data-draw="WTA"><span>WTA</span><span class="dc" id="dc-WTA">0/127</span></button>
+      </div>
+      <div class="lockstrip" id="lockstrip"></div>
+    </div>
+    <div class="banner" id="bannerWrap"></div>
+    <div class="wrap" id="bracketWrap"></div>
+    <div class="sbar" id="sbar">
+      <div class="sbar-in">
+        <div class="ss"><strong id="pcount">0</strong> of 127 picks · <span id="drawLabel">ATP</span></div>
+        <button class="bsub" id="reviewBtn">Review &amp; submit →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD PAGE -->
+  <div class="pg" id="pg-leaderboard">
+    <div class="lbw">
+      <div class="lbtabs">
+        <button class="lbtab on" data-lb="ATP">ATP</button>
+        <button class="lbtab" data-lb="WTA">WTA</button>
+        <button class="lbtab" data-lb="combined">Combined</button>
+      </div>
+      <div class="lb-meta"><span id="lbCount"></span><span id="lbUpdated"></span></div>
+      <div id="lbBody"><div class="lb-empty">Loading standings…</div></div>
+      <div class="credit">downtheline™</div>
+    </div>
+  </div>
+
+  <!-- RULES PAGE -->
+  <div class="pg" id="pg-rules">
+    <div class="rlw">
+      <div class="rl-h">How it works</div>
+      <p class="rl-p">Fill out the full draw for both ATP and WTA — pick a winner in every match from Round 1 through the Final. Your winners carry forward automatically, so a round unlocks once the round before it is complete.</p>
+      <div class="rl-h">Scoring</div>
+      <p class="rl-p">Points double each round, so deep correct calls matter most.</p>
+      <table class="sct">
+        <tr><td>Round 1</td><td>5</td></tr>
+        <tr><td>Round 2</td><td>10</td></tr>
+        <tr><td>Round 3</td><td>20</td></tr>
+        <tr><td>Round of 16</td><td>40</td></tr>
+        <tr><td>Quarterfinals</td><td>80</td></tr>
+        <tr><td>Semifinals</td><td>160</td></tr>
+        <tr><td>Final</td><td>320</td></tr>
+        <tr><td>Correct champion (bonus)</td><td>+320</td></tr>
+      </table>
+      <div class="rl-h">Deadlines &amp; redraw</div>
+      <p class="rl-p">Picks lock Monday June 29 at 6 AM ET, when first-round play begins. You get one optional redraw during Middle Sunday (opens July 5, closes July 6 before the Round of 16) to rewrite your Round of 16, Quarterfinal, Semifinal and Final picks — at a cost of 100 points.</p>
+      <div class="rl-note"><b>Results update automatically.</b> Once the draw is published and matches begin, winners and scores refresh on their own throughout the fortnight.</div>
+      <div class="credit">downtheline™</div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW / PICKS MODAL -->
+<div class="mbk" id="modal"><div class="mdl" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════ Country code → flag (from countries.js) ════════ */
+const COUNTRY_MAP={USA:'US',GBR:'GB',GER:'DE',SUI:'CH',FRA:'FR',ESP:'ES',ITA:'IT',AUS:'AU',CAN:'CA',ARG:'AR',BRA:'BR',JPN:'JP',CHN:'CN',KOR:'KR',IND:'IN',RSA:'ZA',NZL:'NZ',MEX:'MX',COL:'CO',CHI:'CL',PER:'PE',ECU:'EC',URU:'UY',VEN:'VE',PAR:'PY',DOM:'DO',PUR:'PR',HAI:'HT',JAM:'JM',BAH:'BS',TRI:'TT',BAR:'BB',BER:'BM',BOL:'BO',AUT:'AT',BEL:'BE',NED:'NL',DEN:'DK',SWE:'SE',NOR:'NO',FIN:'FI',POL:'PL',CZE:'CZ',SVK:'SK',HUN:'HU',ROU:'RO',BUL:'BG',CRO:'HR',SRB:'RS',SLO:'SI',BIH:'BA',MNE:'ME',MKD:'MK',ALB:'AL',KOS:'XK',GRE:'GR',POR:'PT',IRL:'IE',UKR:'UA',BLR:'BY',EST:'EE',LAT:'LV',LTU:'LT',GEO:'GE',ARM:'AM',AZE:'AZ',CYP:'CY',MLT:'MT',LUX:'LU',MON:'MC',AND:'AD',LIE:'LI',ISL:'IS',TPE:'TW',HKG:'HK',THA:'TH',PHI:'PH',INA:'ID',MAS:'MY',SIN:'SG',VIE:'VN',PAK:'PK',SRI:'LK',BAN:'BD',KAZ:'KZ',UZB:'UZ',TKM:'TM',KGZ:'KG',TJK:'TJ',MGL:'MN',FIJ:'FJ',SAM:'WS',ISR:'IL',LIB:'LB',JOR:'JO',KSA:'SA',UAE:'AE',QAT:'QA',KUW:'KW',BRN:'BH',OMA:'OM',IRI:'IR',TUN:'TN',ALG:'DZ',MAR:'MA',EGY:'EG',NGR:'NG',KEN:'KE',ZIM:'ZW',MOZ:'MZ'};
+function toISO2(c){if(!c)return null;const u=String(c).toUpperCase().trim();return COUNTRY_MAP[u]||u.slice(0,2);}
+function isoToFlag(i){if(!i||i.length<2)return '';try{return String.fromCodePoint(i.codePointAt(0)-65+0x1F1E6,i.codePointAt(1)-65+0x1F1E6);}catch(e){return '';}}
+function countryFlag(c){const i=toISO2(c);return i?isoToFlag(i):'';}
+
+/* ════════ Config ════════ */
+const AS_URL = ''; // ← paste your deployed Apps Script Web App URL here to go live
+const params = new URLSearchParams(location.search);
+const DEMO = !AS_URL || params.get('mode')==='demo';
+const ADMIN_ROUTE = params.get('admin')==='1';
+
+// Demo-only brackets (live brackets come from the Brackets sheet via resolveCode)
+const DEMO_BRACKETS={
+  'ITHF2026ELC':{id:'elc',name:'ITHF Emerging Leaders Council',subheader:'Presented by the Emerging Leaders Council · Bracket Challenge for ITHF & Friends',roles:['ELC Member','ITHF Board','ITHF Staff','Friend of ITHF']},
+  'TEST2026':{id:'demo',name:'Demo Pool',subheader:'Demo bracket · entries are not saved',roles:['Member','Guest']},
+  'FAMILY26':{id:'family',name:'Family & Friends Pool',subheader:'A friendly demo bracket',roles:['Family','Friend']}
+};
+const DEMO_ADMIN='ADMIN2026';
+let DEMO_STORE=null;
+function demoBrackets(){
+  if(!DEMO_STORE) DEMO_STORE=Object.entries(DEMO_BRACKETS).map(([pc,b])=>({id:b.id,name:b.name,passcode:pc,subheader:b.subheader,roles:b.roles,active:true,entryCount:0}));
+  return DEMO_STORE;
+}
+
+const ROUNDS=[
+  {key:'R1',label:'Round 1',pts:5,n:64},
+  {key:'R2',label:'Round 2',pts:10,n:32},
+  {key:'R3',label:'Round 3',pts:20,n:16},
+  {key:'R16',label:'Round of 16',pts:40,n:8},
+  {key:'QF',label:'Quarterfinals',pts:80,n:4},
+  {key:'SF',label:'Semifinals',pts:160,n:2},
+  {key:'Final',label:'Final',pts:320,n:1},
+];
+const RKEYS=ROUNDS.map(r=>r.key);
+const CHAMP_BONUS=320, REDRAW_PENALTY=100;
+
+/* ════════ State ════════ */
+function blankPicks(){const o={};RKEYS.forEach(k=>o[k]={});return o;}
+const S={
+  user:null, role:null, draw:'ATP', tab:'bracket', lbView:'ATP',
+  bracket:null, passcode:null, tournament:null, adminCode:null, adminBrackets:[],
+  config:{}, matchups:{ATP:{},WTA:{}}, results:{ATP:{},WTA:{}}, leaderboard:[],
+  players:{ATP:{},WTA:{}},
+  picks:{ATP:blankPicks(),WTA:blankPicks()},
+  finalSetSum:{ATP:'',WTA:''},
+  submitted:{ATP:false,WTA:false},
+  redrawUsed:{ATP:false,WTA:false},
+  redrawActive:false,
+  open:{ATP:'R1',WTA:'R1'},
+};
+
+/* ════════ API ════════ */
+async function apiGet(action){
+  const r=await fetch(AS_URL+'?action='+action);
+  return r.json();
+}
+async function apiPost(body){
+  const r=await fetch(AS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+  return r.json();
+}
+
+/* ════════ Deadlines (from active tournament) ════════ */
+function picksLocked(){
+  const t=S.tournament||{};
+  const d=t.picksDeadline?new Date(t.picksDeadline):new Date('2026-06-29T10:00:00Z');
+  return new Date()>d;
+}
+function redrawWindowOpen(){
+  const t=S.tournament||{};
+  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-05T04:00:00Z');
+  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-06T10:00:00Z');
+  const n=new Date(); return n>=o&&n<=c;
+}
+function countdown(){
+  const t=S.tournament||{};
+  const d=t.picksDeadline?new Date(t.picksDeadline):new Date('2026-06-29T10:00:00Z');
+  let ms=d-new Date(); if(ms<=0) return null;
+  const dd=Math.floor(ms/864e5); ms-=dd*864e5;
+  const hh=Math.floor(ms/36e5); ms-=hh*36e5;
+  const mm=Math.floor(ms/6e4);
+  return dd+'d '+String(hh).padStart(2,'0')+'h '+String(mm).padStart(2,'0')+'m';
+}
+
+/* ════════ Bracket helpers ════════ */
+function playerObj(draw,name){return S.players[draw][name]||{name:name,seed:'',flag:''};}
+function indexPlayers(draw){
+  const idx={};
+  Object.values(S.matchups[draw]||{}).forEach(m=>{
+    if(m.p1) idx[m.p1]={name:m.p1,seed:m.seed1||'',flag:countryFlag(m.country1)};
+    if(m.p2) idx[m.p2]={name:m.p2,seed:m.seed2||'',flag:countryFlag(m.country2)};
+  });
+  S.players[draw]=idx;
+}
+function competitors(draw,rIdx,m){
+  if(rIdx===0){
+    const mu=S.matchups[draw][String(m)];
+    if(!mu) return [null,null];
+    return [mu.p1?playerObj(draw,mu.p1):null, mu.p2?playerObj(draw,mu.p2):null];
+  }
+  const prev=ROUNDS[rIdx-1].key;
+  const a=S.picks[draw][prev][2*m-1], b=S.picks[draw][prev][2*m];
+  return [a?playerObj(draw,a):null, b?playerObj(draw,b):null];
+}
+function reconcile(draw){
+  for(let r=1;r<ROUNDS.length;r++){
+    const rk=ROUNDS[r].key;
+    for(let m=1;m<=ROUNDS[r].n;m++){
+      const pk=S.picks[draw][rk][m]; if(!pk) continue;
+      const [a,b]=competitors(draw,r,m);
+      if(!((a&&a.name===pk)||(b&&b.name===pk))) delete S.picks[draw][rk][m];
+    }
+  }
+}
+function roundCount(draw,r){let c=0;const rk=ROUNDS[r].key;for(let m=1;m<=ROUNDS[r].n;m++)if(S.picks[draw][rk][m])c++;return c;}
+function roundComplete(draw,r){return roundCount(draw,r)===ROUNDS[r].n;}
+function roundUnlocked(draw,r){return r===0||roundComplete(draw,r-1);}
+function totalPicks(draw){let c=0;ROUNDS.forEach((R,i)=>c+=roundCount(draw,i));return c;}
+function clientScore(draw){
+  let t=0;
+  ROUNDS.forEach((R)=>{
+    const res=S.results[draw][R.key]||{}, pk=S.picks[draw][R.key]||{};
+    Object.entries(pk).forEach(([m,name])=>{ if(res[m]&&res[m]===name){t+=R.pts;if(R.key==='Final')t+=CHAMP_BONUS;} });
+  });
+  if(S.redrawUsed[draw])t-=REDRAW_PENALTY;
+  return t;
+}
+/* editable: which rounds can be changed right now */
+function roundEditable(draw,rIdx){
+  if(S.submitted[draw]){
+    if(S.redrawActive && redrawWindowOpen() && !S.redrawUsed[draw]) return rIdx>=3; // R16+
+    return false;
+  }
+  return !picksLocked();
+}
+
+/* ════════ Render ════════ */
+function $(id){return document.getElementById(id);}
+function render(){
+  reconcile(S.draw);
+  renderBracket();
+  renderHeader();
+}
+function renderHeader(){
+  $('score').textContent = (clientScore('ATP')+clientScore('WTA'));
+  ['ATP','WTA'].forEach(d=>{ const e=$('dc-'+d); if(e) e.textContent=totalPicks(d)+'/127'; });
+  const cd=countdown();
+  $('lockstrip').innerHTML = picksLocked()
+    ? 'Picks are <strong>locked</strong>'
+    : (cd?('Picks lock in <strong>'+cd+'</strong>'):'Picks lock soon');
+}
+function renderBracket(){
+  const draw=S.draw, wrap=$('bracketWrap'); wrap.innerHTML='';
+  $('drawLabel').textContent=draw;
+
+  // banners
+  const bw=$('bannerWrap'); bw.innerHTML='';
+  if(DEMO) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-sample"><b>Sample draw.</b> Players are placeholders — the real 2026 draw loads from the API on Fri June 26.</div>');
+  if(picksLocked() && !S.submitted[draw]) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
+  if(S.submitted[draw]){
+    let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> Scores update automatically.</span>';
+    if(redrawWindowOpen() && !S.redrawUsed[draw] && !S.redrawActive) html+='<button class="mini-btn" id="redrawBtn">Use redraw</button>';
+    if(S.redrawActive) html+='<button class="mini-btn" id="redrawSaveBtn">Save redraw</button>';
+    html+='</div>';
+    bw.insertAdjacentHTML('beforeend',html);
+  }
+
+  // determine open round: explicit key, '__none__' = all collapsed, else auto-open active
+  let openKey=S.open[draw];
+  if(openKey && openKey!=='__none__'){
+    const oi=RKEYS.indexOf(openKey);
+    if(oi<0 || !roundUnlocked(draw,oi)) openKey=null;
+  }
+  if(openKey===null || openKey===undefined){
+    for(let i=0;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){openKey=ROUNDS[i].key;break;} }
+    if(!openKey) openKey=ROUNDS[ROUNDS.length-1].key;
+  }
+
+  // auto-fill control (only when fully editable)
+  if(!S.submitted[draw] && !picksLocked()){
+    const af=document.createElement('div'); af.className='afill-bar';
+    af.innerHTML='<span class="q"><b>Auto-fill '+draw+':</b> advance favorites by seed, or pick at random.</span><button data-mode="fav">Favorites</button><button data-mode="random">Random</button>';
+    af.querySelectorAll('button').forEach(b=>b.onclick=()=>startAutofill(draw,b.dataset.mode));
+    wrap.appendChild(af);
+  }
+
+  ROUNDS.forEach((R,rIdx)=>{
+    const unlocked=roundUnlocked(draw,rIdx), complete=roundComplete(draw,rIdx), cnt=roundCount(draw,rIdx);
+    const isOpen=(R.key===openKey)&&unlocked;
+    const acc=document.createElement('div');
+    acc.className='acc'+(!unlocked?' locked':(isOpen?' open active':''))+(complete&&!isOpen?' collapsed-done':'');
+    // header
+    let stat;
+    if(!unlocked) stat='<span class="ah-stat lk">Locked</span>';
+    else if(complete) stat='<span class="ah-stat done">'+cnt+'/'+R.n+'<span class="ck">✓</span></span>';
+    else stat='<span class="ah-stat">'+cnt+'/'+R.n+'</span>';
+    acc.innerHTML='<div class="ahead"><div class="ah-l"><span class="ah-rnd">'+R.label+'</span><span class="ah-pts">'+R.pts+' pts</span></div>'
+      +'<div class="ah-r">'+stat+(unlocked?'<span class="arr">▾</span>':'')+'</div></div>';
+    if(unlocked){ acc.querySelector('.ahead').onclick=()=>{ S.open[draw]=(S.open[draw]===R.key&&isOpen)?'__none__':R.key; renderBracket(); }; }
+    else { acc.insertAdjacentHTML('beforeend','<div class="lockmsg">Complete '+ROUNDS[rIdx-1].label+' to unlock these picks.</div>'); }
+
+    // summary peek (completed + collapsed)
+    if(complete&&!isOpen){
+      const sm=document.createElement('div'); sm.className='summary';
+      let shown=0;
+      for(let m=1;m<=R.n&&shown<3;m++){ const nm=S.picks[draw][R.key][m]; if(!nm)continue; const p=playerObj(draw,nm);
+        sm.insertAdjacentHTML('beforeend','<div class="srow"><span class="fl">'+(p.flag||'')+'</span><span class="nm">'+(p.seed?'<span class="sd">'+p.seed+'</span>':'')+esc(nm)+'</span><span class="ck">✓</span></div>'); shown++; }
+      if(R.n>3) sm.insertAdjacentHTML('beforeend','<div class="srow more">+ '+(R.n-3)+' more pick'+(R.n-3>1?'s':'')+'</div>');
+      acc.appendChild(sm);
+    }
+
+    // body (expanded)
+    if(isOpen){
+      const body=document.createElement('div'); body.className='abody';
+      const editable=roundEditable(draw,rIdx);
+      for(let m=1;m<=R.n;m++){
+        const [a,b]=competitors(draw,rIdx,m);
+        const res=(S.results[draw][R.key]||{})[m];
+        const card=document.createElement('div'); card.className='match';
+        [a,b].forEach((p)=>{ card.appendChild(slotEl(draw,rIdx,R.key,m,p,res,editable)); });
+        body.appendChild(card);
+      }
+      acc.appendChild(body);
+    }
+    wrap.appendChild(acc);
+  });
+
+  // champion card
+  const champName=S.picks[draw]['Final'][1];
+  const cp=document.createElement('div'); cp.className='champ';
+  const champObj=champName?playerObj(draw,champName):null;
+  cp.innerHTML='<div class="cl">Your champion · +'+CHAMP_BONUS+'</div><div class="ct">🏆</div>'
+    +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):'Pick your way through the draw')+'</div>';
+  wrap.appendChild(cp);
+
+  const credit=document.createElement('div'); credit.className='credit'; credit.textContent='downtheline™'; wrap.appendChild(credit);
+
+  // wire redraw buttons
+  const rb=$('redrawBtn'); if(rb) rb.onclick=()=>{ S.redrawActive=true; toast('Redraw open — edit Round of 16 onward, then Save redraw.'); renderBracket(); };
+  const rs=$('redrawSaveBtn'); if(rs) rs.onclick=submitRedraw;
+
+  // submit bar
+  const sb=$('sbar'); const showBar = !S.submitted[draw] && !picksLocked();
+  sb.classList.toggle('show', showBar);
+  $('pcount').textContent=totalPicks(draw);
+  $('reviewBtn').disabled = totalPicks(draw)!==127;
+}
+function slotEl(draw,rIdx,rk,m,p,res,editable){
+  const s=document.createElement('div'); s.className='slot';
+  if(!p){ s.classList.add('tbd');
+    s.innerHTML='<span class="s-sd"></span><span class="s-fl"></span><span class="s-nm">Winner to be decided</span><span class="s-pick"></span>';
+    return s;
+  }
+  const picked=S.picks[draw][rk][m]===p.name;
+  const hasRes=!!res;
+  if(picked) s.classList.add('sel');
+  if(hasRes){
+    if(res===p.name){ s.classList.add('win'); } else { s.classList.add('out'); }
+    s.classList.add('fixed');
+  }
+  let resBadge='';
+  if(hasRes && picked && res===p.name) resBadge='<span class="s-res">+'+ROUNDS[rIdx].pts+'</span>';
+  s.innerHTML='<span class="s-sd">'+(p.seed||'')+'</span><span class="s-fl">'+(p.flag||'')+'</span>'
+    +'<span class="s-nm">'+esc(p.name)+'</span>'+resBadge+'<span class="s-pick"></span>';
+  if(editable && !hasRes){ s.onclick=()=>{ setPick(draw,rIdx,rk,m,p.name); }; }
+  else { s.classList.add('fixed'); }
+  return s;
+}
+function setPick(draw,rIdx,rk,m,name){
+  if(S.picks[draw][rk][m]===name) { /* keep selected; no toggle-off to avoid orphaning */ }
+  else S.picks[draw][rk][m]=name;
+  reconcile(draw);
+  // auto-advance open round if this one just completed
+  if(roundComplete(draw,rIdx)){
+    for(let i=rIdx+1;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){S.open[draw]=ROUNDS[i].key;break;} }
+  }
+  render();
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ════════ Auto-fill ════════ */
+function seedNum(s){const n=parseInt(s,10);return isNaN(n)?null:n;}
+function autofill(draw,mode){
+  S.picks[draw]=blankPicks();
+  for(let r=0;r<ROUNDS.length;r++){
+    const rk=ROUNDS[r].key;
+    for(let m=1;m<=ROUNDS[r].n;m++){
+      const [a,b]=competitors(draw,r,m);
+      if(!a&&!b) continue;
+      if(a&&!b){S.picks[draw][rk][m]=a.name;continue;}
+      if(b&&!a){S.picks[draw][rk][m]=b.name;continue;}
+      let w;
+      if(mode==='random'){ w=Math.random()<0.5?a:b; }
+      else { const sa=seedNum(a.seed),sb=seedNum(b.seed);
+        if(sa!=null&&sb!=null) w=(sa<=sb)?a:b;
+        else if(sa!=null) w=a; else if(sb!=null) w=b; else w=Math.random()<0.5?a:b; }
+      S.picks[draw][rk][m]=w.name;
+    }
+  }
+}
+function startAutofill(draw,mode){
+  if(totalPicks(draw)>0){
+    const label=mode==='fav'?'favorites by seed':'random picks';
+    openModal('<h3>Replace your '+draw+' picks?</h3><div class="msub">Auto-fill ('+label+') overwrites every pick in this draw. You can still change individual picks afterward.</div><div class="mact"><button class="bcf" id="afYes">Auto-fill →</button><button class="bcc" id="afNo">Cancel</button></div>');
+    $('afYes').onclick=()=>{closeModal();doAutofill(draw,mode);};
+    $('afNo').onclick=closeModal;
+  } else doAutofill(draw,mode);
+}
+function doAutofill(draw,mode){
+  autofill(draw,mode);
+  S.open[draw]='__none__';
+  renderBracket(); renderHeader();
+  toast(draw+' bracket auto-filled'+(mode==='fav'?' by seed':' at random')+' — tweak any pick before submitting.');
+}
+
+/* ════════ Post-submit nudge (RG-style ATP↔WTA flow) ════════ */
+function postSubmitNudge(draw){
+  const other=draw==='ATP'?'WTA':'ATP';
+  if(S.submitted[other]){
+    openModal('<h3>Both brackets locked in</h3><div class="msub">Your ATP and WTA picks are in. Scores update automatically as results come in — track your standing on the leaderboard.</div><div class="mact"><button class="bcf" id="goLb">View leaderboard →</button></div>');
+    $('goLb').onclick=()=>{closeModal();setTab('leaderboard');};
+  } else {
+    openModal('<h3>'+draw+' bracket locked in ✓</h3><div class="msub">One down. Now fill out your '+other+' bracket and submit it before picks lock.</div><div class="mact"><button class="bcf" id="goOther">Go to '+other+' →</button><button class="bcc" id="laterBtn">Later</button></div>');
+    $('goOther').onclick=()=>{closeModal();setDraw(other);};
+    $('laterBtn').onclick=closeModal;
+  }
+}
+
+/* ════════ Tabs / draw switch ════════ */
+function setTab(pg){
+  S.tab=pg;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.pg===pg));
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  $('pg-'+pg).classList.add('on');
+  if(pg==='leaderboard'){ if(!DEMO) loadData(); renderLeaderboard(); }
+}
+function setDraw(d){
+  S.draw=d; S.redrawActive=false;
+  document.querySelectorAll('.draw').forEach(b=>b.classList.toggle('on',b.dataset.draw===d));
+  renderBracket();
+}
+
+/* ════════ Submit ════════ */
+function openReview(){
+  const draw=S.draw;
+  if(totalPicks(draw)!==127){ toast('Complete all 127 picks first.',true); return; }
+  let rows='';
+  ROUNDS.forEach((R)=>{ const champ=R.key==='Final';
+    const picksFor=Object.keys(S.picks[draw][R.key]).length;
+    rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp">'+picksFor+'/'+R.n+' ✓</span></div>';
+  });
+  const champName=S.picks[draw]['Final'][1];
+  const body='<h3>Review your '+draw+' bracket</h3><div class="msub">Once submitted, picks lock at the deadline and can\'t be changed (except via your one redraw).</div>'
+    +rows
+    +'<div class="mrow"><span class="rn">Champion</span><span class="rp">'+(champName?esc(champName):'—')+'</span></div>'
+    +'<div class="mact"><button class="bcf" id="confirmSub">Lock in '+draw+' picks →</button><button class="bcc" id="cancelSub">Back</button></div>';
+  openModal(body);
+  $('confirmSub').onclick=confirmSubmit;
+  $('cancelSub').onclick=closeModal;
+}
+async function confirmSubmit(){
+  const draw=S.draw;
+  const btn=$('confirmSub'); btn.disabled=true; btn.textContent='Submitting…';
+  const payload={type:'entry',passcode:S.passcode,name:S.user,role:S.role,draw:draw,picks:S.picks[draw],finalSetSum:parseInt(S.finalSetSum[draw])||0};
+  if(DEMO){ S.submitted[draw]=true; renderBracket(); postSubmitNudge(draw); return; }
+  try{
+    const res=await apiPost(payload);
+    if(res.success){ S.submitted[draw]=true; renderBracket(); postSubmitNudge(draw); }
+    else { btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast(res.error||'Submit failed.',true); }
+  }catch(e){ btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast('Network error — try again.',true); }
+}
+async function submitRedraw(){
+  const draw=S.draw;
+  const payload={type:'redraw',passcode:S.passcode,name:S.user,draw:draw,picks:{R16:S.picks[draw].R16,QF:S.picks[draw].QF,SF:S.picks[draw].SF,Final:S.picks[draw].Final}};
+  if(DEMO){ S.redrawUsed[draw]=true; S.redrawActive=false; toast('Redraw applied (demo · −'+REDRAW_PENALTY+').'); renderBracket(); return; }
+  try{
+    const res=await apiPost(payload);
+    if(res.success){ S.redrawUsed[draw]=true; S.redrawActive=false; toast('Redraw applied (−'+REDRAW_PENALTY+').'); renderBracket(); }
+    else toast(res.error||'Redraw failed.',true);
+  }catch(e){ toast('Network error — try again.',true); }
+}
+
+/* ════════ Leaderboard ════════ */
+function setLb(v){ S.lbView=v; document.querySelectorAll('.lbtab').forEach(t=>t.classList.toggle('on',t.dataset.lb===v)); renderLeaderboard(); }
+const AVA=['#1A5C2E','#4B2E83','#B08D2D','#2A5A6B','#6B2E4B','#3E5A2A'];
+function renderLeaderboard(){
+  const body=$('lbBody'); const v=S.lbView;
+  let rows;
+  if(v==='combined'){
+    const byName={};
+    S.leaderboard.forEach(e=>{ if(!byName[e.name]) byName[e.name]={name:e.name,role:e.role,score:0}; byName[e.name].score+=(e.score||0); });
+    rows=Object.values(byName);
+  } else {
+    rows=S.leaderboard.filter(e=>String(e.draw).toUpperCase()===v).map(e=>({name:e.name,role:e.role,score:e.score||0,draw:e.draw,picks:e.picks}));
+  }
+  rows.sort((a,b)=>b.score-a.score);
+  $('lbCount').textContent=rows.length+(rows.length===1?' entry':' entries');
+  $('lbUpdated').textContent= S.leaderboard.length?('Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})):'';
+  if(!rows.length){ body.innerHTML='<div class="lb-empty">'+(DEMO?'No standings in demo mode.':'No entries yet — be the first to submit.')+'</div>'; return; }
+  body.innerHTML='';
+  rows.forEach((e,i)=>{
+    const me=S.user&&e.name===S.user;
+    const ini=e.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const sub=v==='combined'?(e.role||''):(e.role||'');
+    const el=document.createElement('div'); el.className='lbr'+(me?' me':'');
+    el.innerHTML='<div class="lrk">'+(i+1)+'</div><div class="lav" style="background:'+AVA[i%AVA.length]+'">'+ini+'</div>'
+      +'<div class="li"><div class="ln">'+esc(e.name)+'</div><div class="lsu">'+esc(sub)+'</div></div>'
+      +'<div class="lp">'+e.score+'<div class="lpl">pts</div></div>';
+    if(v!=='combined'&&e.picks) el.onclick=()=>openPicks(e);
+    body.appendChild(el);
+  });
+}
+function openPicks(e){
+  const draw=String(e.draw).toUpperCase();
+  let rows='';
+  ROUNDS.forEach((R)=>{
+    const champ=R.key==='Final';
+    const pk=(e.picks&&e.picks[R.key])||{};
+    const res=S.results[draw][R.key]||{};
+    // show champion + a per-round correct count
+    let correct=0,total=0;
+    Object.entries(pk).forEach(([m,nm])=>{ if(!nm)return; total++; if(res[m]&&res[m]===nm)correct++; });
+    const hasRes=Object.keys(res).length>0;
+    const cls=hasRes?(correct===total&&total>0?'correct':(correct>0?'':'wrong')):'';
+    rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp '+cls+'">'+(hasRes?(correct+'/'+total+' correct'):(total+' picks'))+'</span></div>';
+  });
+  const champName=(e.picks&&e.picks.Final&&e.picks.Final[1])||'—';
+  const body='<h3>'+esc(e.name)+'</h3><div class="msub">'+esc(e.role||'')+' · '+draw+' · '+e.score+' pts</div>'
+    +rows
+    +'<div class="mrow"><span class="rn">Champion</span><span class="rp">'+esc(champName)+'</span></div>'
+    +'<div class="mact"><button class="bcc" id="closePicks" style="flex:1">Close</button></div>';
+  openModal(body); $('closePicks').onclick=closeModal;
+}
+
+/* ════════ Modal / toast ════════ */
+function openModal(html){ $('modalBody').innerHTML=html; $('modal').classList.add('open'); }
+function closeModal(){ $('modal').classList.remove('open'); }
+$('modal').addEventListener('click',e=>{ if(e.target===$('modal')) closeModal(); });
+let toastT;
+function toast(msg,err){ const t=$('toast'); t.textContent=msg; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800); }
+
+/* ════════ Data load ════════ */
+async function loadData(){
+  if(DEMO || !S.bracket) return;
+  try{
+    const d=await apiGet('data&bracket='+encodeURIComponent(S.bracket.id));
+    if(!d.success) return;
+    if(d.matchups){ S.matchups=d.matchups; indexPlayers('ATP'); indexPlayers('WTA'); }
+    if(d.results) S.results=d.results;
+    if(d.tournament) S.tournament=d.tournament;
+    if(d.leaderboard) S.leaderboard=d.leaderboard;
+    // restore this user's submitted entries (leaderboard is already scoped to this bracket)
+    S.leaderboard.forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
+  }catch(e){ /* offline-safe */ }
+}
+
+/* ════════ Demo sample draw ════════ */
+function buildDemoDraw(){
+  const pool=['Sinner','Alcaraz','Zverev','Fritz','Rune','Medvedev','Rublev','Hurkacz','De Minaur','Tsitsipas','Paul','Dimitrov','Shelton','Musetti','Tiafoe','Cobolli','Humbert','Mensik','Fonseca','Khachanov','Lehecka','Machac','Griekspoor','Bublik','Nakashima','Struff','Norrie','Baez','Etcheverry','Auger','Korda','Popyrin','Sonego','Cerundolo','Darderi','Navone','Marozsan','Arnaldi','Bautista','Vukic','Kecmanovic','Carballes','Fognini','Thompson','Halys','Borges','Munar','Giron','Bergs','Comesana','Jarry','Shapovalov','Berrettini','Wawrinka','Murray','Goffin','Ofner','Zhang','Nishioka','Coric','Djere','Mannarino','Gaston','Moutet'];
+  const wpool=['Sabalenka','Swiatek','Gauff','Rybakina','Pegula','Andreeva','Paolini','Navarro','Zheng','Keys','Vondrousova','Krejcikova','Kostyuk','Svitolina','Haddad','Kasatkina','Samsonova','Ostapenko','Mertens','Alexandrova','Collins','Anisimova','Muchova','Badosa','Linette','Cirstea','Shnaider','Kalinskaya','Putintseva','Frech','Tomljanovic','Bouzkova','Bronzetti','Sakkari','Azarenka','Vekic','Garcia','Stephens','Siegemund','Schmiedlova','Tauson','Boulter','Raducanu','Wozniacki','Pavlyuchenkova','Krueger','Sherif','Sun','Yastremska','Noskova','Townsend','Volynets','Stearns','Bouzas','Lys','Parry','Bucsa','Cocciaretto','Maria','Jacquemot','Wang','Birrell','Sramkova','Avanesyan'];
+  const ctry=['ITA','ESP','GER','USA','DEN','RUS','POL','FRA','AUS','GRE','BUL','CZE','SRB','CAN','ARG','BRA','GBR','KAZ','CHN','UKR'];
+  function draw(names){
+    const o={};
+    for(let i=1;i<=64;i++){
+      const p1=names[(2*(i-1))%names.length], p2=names[(2*(i-1)+1)%names.length];
+      o[String(i)]={id:String(i),p1:p1,p2:p2,seed1:(i<=16&&i%2===1)?String(((i+1)/2)):'',country1:ctry[(i*2)%ctry.length],seed2:'',country2:ctry[(i*3+1)%ctry.length]};
+    }
+    return o;
+  }
+  S.matchups={ATP:draw(pool),WTA:draw(wpool)};
+  indexPlayers('ATP'); indexPlayers('WTA');
+}
+
+/* ════════ Gate ════════ */
+function escAttr(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+async function resolveCode(code){
+  const c=code.trim().toUpperCase();
+  if(DEMO){ const b=demoBrackets().find(x=>x.active!==false && x.passcode.toUpperCase()===c); return b?{id:b.id,name:b.name,subheader:b.subheader,roles:b.roles}:null; }
+  try{ const d=await apiGet('resolveCode&code='+encodeURIComponent(code.trim())); return d.success?d.bracket:null; }catch(e){ return null; }
+}
+function applyBracketTheme(b){
+  const ey=$('gEyebrow'); if(ey) ey.textContent=b.name;
+  const hs=$('hbSub'); if(hs) hs.textContent=b.subheader||'';
+  const sel=$('gRole'); sel.innerHTML='<option value="" disabled selected>Role / affiliation</option>';
+  (b.roles||[]).forEach(r=>{ const o=document.createElement('option'); o.textContent=r; sel.appendChild(o); });
+}
+async function gateStep(){
+  const more=$('moreFields'), err=$('gErr'), btn=$('gBtn');
+  if(!more.classList.contains('show')){
+    const code=$('gCode').value.trim();
+    if(!code){ err.textContent='Enter your bracket invite code.'; return; }
+    btn.disabled=true; const prev=btn.textContent; btn.textContent='Checking…';
+    const b=await resolveCode(code);
+    btn.disabled=false; btn.textContent=prev;
+    if(!b){ err.textContent='Invalid or inactive code. Contact your bracket admin.'; return; }
+    S.bracket=b; S.passcode=code;
+    applyBracketTheme(b);
+    err.textContent=''; more.classList.add('show'); btn.textContent='Enter challenge'; $('gName').focus(); return;
+  }
+  const name=$('gName').value.trim(), role=$('gRole').value;
+  if(!name){ err.textContent='Please enter your name.'; return; }
+  if(!role){ err.textContent='Please select your role.'; return; }
+  S.user=name; S.role=role;
+  try{ localStorage.setItem('w26_user',name); localStorage.setItem('w26_role',role); }catch(e){}
+  if(!DEMO) await loadData();
+  $('gate').classList.add('gone'); $('app').classList.add('in');
+  render(); renderLeaderboard();
+}
+
+/* ════════ Admin screen ════════ */
+async function adminUnlock(){
+  const code=$('adminCode').value.trim(), err=$('adminErr'), btn=$('adminBtn');
+  if(!code){ err.textContent='Enter the admin code.'; return; }
+  if(DEMO){ if(code.toUpperCase()!==DEMO_ADMIN){ err.textContent='Incorrect admin code.'; return; } S.adminCode=code; showAdminPanel(); return; }
+  btn.disabled=true; btn.textContent='Checking…';
+  try{
+    const d=await apiGet('adminBrackets&admin='+encodeURIComponent(code));
+    btn.disabled=false; btn.textContent='Unlock';
+    if(!d.success){ err.textContent=d.error||'Authentication failed.'; return; }
+    S.adminCode=code; S.adminBrackets=d.brackets||[]; showAdminPanel();
+  }catch(e){ btn.disabled=false; btn.textContent='Unlock'; err.textContent='Network error — try again.'; }
+}
+function showAdminPanel(){ $('adminGate').style.display='none'; $('adminPanel').style.display='block'; renderBracketList(); }
+async function refreshAdminBrackets(){
+  if(DEMO) return;
+  try{ const d=await apiGet('adminBrackets&admin='+encodeURIComponent(S.adminCode)); if(d.success) S.adminBrackets=d.brackets||[]; }catch(e){}
+}
+function renderBracketList(){
+  const list=$('bracketList'); const items=DEMO?demoBrackets():(S.adminBrackets||[]);
+  list.innerHTML='';
+  if(!items.length){ list.innerHTML='<div class="lb-empty">No brackets yet — create the first one.</div>'; return; }
+  items.forEach(b=>{
+    const el=document.createElement('div'); el.className='brow'+(b.active===false?' off':'');
+    el.innerHTML='<div class="bi"><div class="bn">'+esc(b.name)+(b.active===false?' <span class="boff">inactive</span>':'')+'</div><div class="bmeta">code <b>'+esc(b.passcode)+'</b> · '+(b.entryCount||0)+' entries</div></div><button class="bedit">Edit</button>';
+    el.querySelector('.bedit').onclick=()=>openBracketEditor(b);
+    list.appendChild(el);
+  });
+}
+function openBracketEditor(b){
+  const isNew=!b, v=b||{name:'',passcode:'',subheader:'',roles:[],active:true};
+  const rolesStr=Array.isArray(v.roles)?v.roles.join(', '):(v.roles||'');
+  openModal('<h3>'+(isNew?'New bracket':'Edit bracket')+'</h3>'
+    +'<div class="msub">'+(isNew?'Members join with the passcode. The visual style stays consistent across every bracket.':'Changing the passcode locks out anyone using the old one.')+'</div>'
+    +'<div class="afield"><label>Name</label><input id="ebName" class="ginput" value="'+escAttr(v.name)+'" placeholder="e.g. Smith Family Pool"></div>'
+    +'<div class="afield"><label>Passcode</label><input id="ebCode" class="ginput" value="'+escAttr(v.passcode)+'" placeholder="e.g. SMITH2026"></div>'
+    +'<div class="afield"><label>Subheader</label><input id="ebSub" class="ginput" value="'+escAttr(v.subheader)+'" placeholder="Presented by …"></div>'
+    +'<div class="afield"><label>Roles (comma-separated)</label><input id="ebRoles" class="ginput" value="'+escAttr(rolesStr)+'" placeholder="Member, Guest"></div>'
+    +(isNew?'':'<div class="afield"><label>Status</label><select id="ebActive" class="ginput"><option value="true"'+(v.active!==false?' selected':'')+'>Active</option><option value="false"'+(v.active===false?' selected':'')+'>Inactive</option></select></div>')
+    +'<div class="gerr" id="ebErr"></div>'
+    +'<div class="mact"><button class="bcf" id="ebSave">'+(isNew?'Create →':'Save')+'</button><button class="bcc" id="ebCancel">Cancel</button></div>');
+  $('ebCancel').onclick=closeModal;
+  $('ebSave').onclick=()=>saveBracket(isNew?null:v.id);
+}
+async function saveBracket(bracketId){
+  const name=$('ebName').value.trim(), passcode=$('ebCode').value.trim(), subheader=$('ebSub').value.trim();
+  const roles=$('ebRoles').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const active=$('ebActive')?$('ebActive').value==='true':true;
+  const err=$('ebErr');
+  if(!name||!passcode){ err.textContent='Name and passcode are required.'; return; }
+  if(DEMO){
+    const store=demoBrackets();
+    if(store.some(b=>b.passcode.toUpperCase()===passcode.toUpperCase() && b.id!==bracketId)){ err.textContent='That passcode is already in use.'; return; }
+    if(bracketId){ Object.assign(store.find(x=>x.id===bracketId),{name,passcode,subheader,roles,active}); }
+    else { store.push({id:'b'+Date.now(),name,passcode,subheader,roles,active:true,entryCount:0}); }
+    closeModal(); renderBracketList(); toast('Bracket saved (demo).'); return;
+  }
+  const body=bracketId
+    ? {type:'editBracket',adminCode:S.adminCode,bracketId:bracketId,name,passcode,subheader,roles,active}
+    : {type:'createBracket',adminCode:S.adminCode,name,passcode,subheader,roles};
+  const btn=$('ebSave'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    const d=await apiPost(body);
+    if(!d.success){ btn.disabled=false; btn.textContent=bracketId?'Save':'Create →'; err.textContent=d.error||'Save failed.'; return; }
+    closeModal(); await refreshAdminBrackets(); renderBracketList(); toast('Bracket saved.');
+  }catch(e){ btn.disabled=false; btn.textContent=bracketId?'Save':'Create →'; err.textContent='Network error — try again.'; }
+}
+
+/* ════════ Init ════════ */
+function init(){
+  if(DEMO){ buildDemoDraw(); $('demoTag').classList.add('show'); }
+  if(ADMIN_ROUTE){
+    $('gate').style.display='none';
+    $('admin').classList.add('show');
+    $('adminBtn').onclick=adminUnlock;
+    $('adminPwToggle').onclick=()=>{ const i=$('adminCode'); const sh=i.classList.toggle('reveal'); $('adminPwToggle').textContent=sh?'Hide':'Show'; i.focus(); };
+    $('adminCode').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock();});
+    $('addBracketBtn').onclick=()=>openBracketEditor(null);
+    return;
+  }
+  $('gBtn').onclick=gateStep;
+  $('pwToggle').onclick=()=>{ const i=$('gCode'); const shown=i.classList.toggle('reveal'); $('pwToggle').textContent=shown?'Hide':'Show'; i.focus(); };
+  $('gCode').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
+  $('gName').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.pg));
+  document.querySelectorAll('.draw').forEach(b=>b.onclick=()=>setDraw(b.dataset.draw));
+  document.querySelectorAll('.lbtab').forEach(t=>t.onclick=()=>setLb(t.dataset.lb));
+  $('reviewBtn').onclick=openReview;
+  // periodic refresh of live data
+  if(!DEMO) setInterval(()=>{ if(S.user){ loadData().then(()=>{ if(S.tab==='bracket') renderBracket(); else renderLeaderboard(); renderHeader(); }); } }, 60000);
+}
+init();
+</script>
+</body>
 </html>
- 
