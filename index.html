@@ -514,11 +514,31 @@ function roundCount(draw,r){let c=0;const rk=ROUNDS[r].key;for(let m=1;m<=ROUNDS
 function roundComplete(draw,r){return roundCount(draw,r)===ROUNDS[r].n;}
 function roundUnlocked(draw,r){return r===0||roundComplete(draw,r-1);}
 function totalPicks(draw){let c=0;ROUNDS.forEach((R,i)=>c+=roundCount(draw,i));return c;}
+// ── Name matching (must mirror Code.gs) ──
+function normName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z \-]/g,'').replace(/\s+/g,' ').trim();}
+function namesMatch(a,b){
+  const na=normName(a),nb=normName(b); if(!na||!nb) return false;
+  if(na===nb) return true;
+  const ta=na.split(' '),tb=nb.split(' ');
+  const short=ta.length<=tb.length?ta:tb, long=ta.length<=tb.length?tb:ta;
+  for(let i=0;i<short.length;i++){ if(short[short.length-1-i]!==long[long.length-1-i]) return false; }
+  return true;
+}
+// winners of a (draw,round) as a name list; matchWinner returns whichever competitor actually won
+function roundWinners(draw,rk){ return Object.values((S.results[draw]&&S.results[draw][rk])||{}).filter(Boolean); }
+function matchWinner(draw,rk,a,b){
+  const w=roundWinners(draw,rk); if(!w.length) return null;
+  if(a && w.some(x=>namesMatch(x,a.name))) return a.name;
+  if(b && w.some(x=>namesMatch(x,b.name))) return b.name;
+  return null;
+}
 function clientScore(draw){
   let t=0;
   ROUNDS.forEach((R)=>{
-    const res=S.results[draw][R.key]||{}, pk=S.picks[draw][R.key]||{};
-    Object.entries(pk).forEach(([m,name])=>{ if(res[m]&&res[m]===name){t+=R.pts;if(R.key==='Final')t+=CHAMP_BONUS;} });
+    const winners=roundWinners(draw,R.key); if(!winners.length) return;
+    Object.values(S.picks[draw][R.key]||{}).filter(Boolean).forEach(name=>{
+      if(winners.some(w=>namesMatch(w,name))){ t+=R.pts; if(R.key==='Final') t+=CHAMP_BONUS; }
+    });
   });
   if(S.redrawUsed[draw])t-=REDRAW_PENALTY;
   return t;
@@ -613,9 +633,9 @@ function renderBracket(){
       const editable=roundEditable(draw,rIdx);
       for(let m=1;m<=R.n;m++){
         const [a,b]=competitors(draw,rIdx,m);
-        const res=(S.results[draw][R.key]||{})[m];
+        const winnerName=matchWinner(draw,R.key,a,b);
         const card=document.createElement('div'); card.className='match';
-        [a,b].forEach((p)=>{ card.appendChild(slotEl(draw,rIdx,R.key,m,p,res,editable)); });
+        [a,b].forEach((p)=>{ card.appendChild(slotEl(draw,rIdx,R.key,m,p,winnerName,editable)); });
         body.appendChild(card);
       }
       acc.appendChild(body);
@@ -643,21 +663,19 @@ function renderBracket(){
   $('pcount').textContent=totalPicks(draw);
   $('reviewBtn').disabled = totalPicks(draw)!==127;
 }
-function slotEl(draw,rIdx,rk,m,p,res,editable){
+function slotEl(draw,rIdx,rk,m,p,winnerName,editable){
   const s=document.createElement('div'); s.className='slot';
   if(!p){ s.classList.add('tbd');
     s.innerHTML='<span class="s-sd"></span><span class="s-fl"></span><span class="s-nm">Winner to be decided</span><span class="s-pick"></span>';
     return s;
   }
   const picked=S.picks[draw][rk][m]===p.name;
-  const hasRes=!!res;
+  const hasRes=!!winnerName;
+  const isWin=hasRes && winnerName===p.name;
   if(picked) s.classList.add('sel');
-  if(hasRes){
-    if(res===p.name){ s.classList.add('win'); } else { s.classList.add('out'); }
-    s.classList.add('fixed');
-  }
+  if(hasRes){ s.classList.add(isWin?'win':'out','fixed'); }
   let resBadge='';
-  if(hasRes && picked && res===p.name) resBadge='<span class="s-res">+'+ROUNDS[rIdx].pts+'</span>';
+  if(isWin && picked) resBadge='<span class="s-res">+'+ROUNDS[rIdx].pts+'</span>';
   s.innerHTML='<span class="s-sd">'+(p.seed||'')+'</span><span class="s-fl">'+(p.flag||'')+'</span>'
     +'<span class="s-nm">'+esc(p.name)+'</span>'+resBadge+'<span class="s-pick"></span>';
   if(editable && !hasRes){ s.onclick=()=>{ setPick(draw,rIdx,rk,m,p.name); }; }
@@ -814,11 +832,10 @@ function openPicks(e){
   ROUNDS.forEach((R)=>{
     const champ=R.key==='Final';
     const pk=(e.picks&&e.picks[R.key])||{};
-    const res=S.results[draw][R.key]||{};
-    // show champion + a per-round correct count
+    const winners=Object.values((S.results[draw]&&S.results[draw][R.key])||{}).filter(Boolean);
     let correct=0,total=0;
-    Object.entries(pk).forEach(([m,nm])=>{ if(!nm)return; total++; if(res[m]&&res[m]===nm)correct++; });
-    const hasRes=Object.keys(res).length>0;
+    Object.values(pk).forEach(nm=>{ if(!nm)return; total++; if(winners.some(w=>namesMatch(w,nm)))correct++; });
+    const hasRes=winners.length>0;
     const cls=hasRes?(correct===total&&total>0?'correct':(correct>0?'':'wrong')):'';
     rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp '+cls+'">'+(hasRes?(correct+'/'+total+' correct'):(total+' picks'))+'</span></div>';
   });
