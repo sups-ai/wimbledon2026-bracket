@@ -485,8 +485,8 @@ function playerObj(draw,name){return S.players[draw][name]||{name:name,seed:'',f
 function indexPlayers(draw){
   const idx={};
   Object.values(S.matchups[draw]||{}).forEach(m=>{
-    if(m.p1) idx[m.p1]={name:m.p1,seed:m.seed1||'',flag:countryFlag(m.country1)};
-    if(m.p2) idx[m.p2]={name:m.p2,seed:m.seed2||'',flag:countryFlag(m.country2)};
+    if(m.p1 && (!idx[m.p1] || (!idx[m.p1].seed && m.seed1))) idx[m.p1]={name:m.p1,seed:m.seed1||'',flag:countryFlag(m.country1)};
+    if(m.p2 && (!idx[m.p2] || (!idx[m.p2].seed && m.seed2))) idx[m.p2]={name:m.p2,seed:m.seed2||'',flag:countryFlag(m.country2)};
   });
   S.players[draw]=idx;
 }
@@ -875,18 +875,26 @@ async function loadData(){
 
 /* ════════ Demo sample draw ════════ */
 function buildDemoDraw(){
-  const pool=['Sinner','Alcaraz','Zverev','Fritz','Rune','Medvedev','Rublev','Hurkacz','De Minaur','Tsitsipas','Paul','Dimitrov','Shelton','Musetti','Tiafoe','Cobolli','Humbert','Mensik','Fonseca','Khachanov','Lehecka','Machac','Griekspoor','Bublik','Nakashima','Struff','Norrie','Baez','Etcheverry','Auger','Korda','Popyrin','Sonego','Cerundolo','Darderi','Navone','Marozsan','Arnaldi','Bautista','Vukic','Kecmanovic','Carballes','Fognini','Thompson','Halys','Borges','Munar','Giron','Bergs','Comesana','Jarry','Shapovalov','Berrettini','Wawrinka','Murray','Goffin','Ofner','Zhang','Nishioka','Coric','Djere','Mannarino','Gaston','Moutet'];
-  const wpool=['Sabalenka','Swiatek','Gauff','Rybakina','Pegula','Andreeva','Paolini','Navarro','Zheng','Keys','Vondrousova','Krejcikova','Kostyuk','Svitolina','Haddad','Kasatkina','Samsonova','Ostapenko','Mertens','Alexandrova','Collins','Anisimova','Muchova','Badosa','Linette','Cirstea','Shnaider','Kalinskaya','Putintseva','Frech','Tomljanovic','Bouzkova','Bronzetti','Sakkari','Azarenka','Vekic','Garcia','Stephens','Siegemund','Schmiedlova','Tauson','Boulter','Raducanu','Wozniacki','Pavlyuchenkova','Krueger','Sherif','Sun','Yastremska','Noskova','Townsend','Volynets','Stearns','Bouzas','Lys','Parry','Bucsa','Cocciaretto','Maria','Jacquemot','Wang','Birrell','Sramkova','Avanesyan'];
-  const ctry=['ITA','ESP','GER','USA','DEN','RUS','POL','FRA','AUS','GRE','BUL','CZE','SRB','CAN','ARG','BRA','GBR','KAZ','CHN','UKR'];
-  function draw(names){
+  // Standard 32-seed bracket line order (keeps seeds 1 & 2 in opposite ends, etc.)
+  const SEED_ORDER=[1,32,17,16,9,24,25,8,5,28,21,12,13,20,29,4,3,30,19,14,11,22,27,6,7,26,23,10,15,18,31,2];
+  // [name, IOC country] — first 32 are the seeds (in ranking order)
+  const ATP=[['Sinner','ITA'],['Alcaraz','ESP'],['Zverev','GER'],['Fritz','USA'],['Rune','DEN'],['Medvedev','RUS'],['Rublev','RUS'],['Hurkacz','POL'],['De Minaur','AUS'],['Tsitsipas','GRE'],['Paul','USA'],['Dimitrov','BUL'],['Shelton','USA'],['Musetti','ITA'],['Tiafoe','USA'],['Cobolli','ITA'],['Humbert','FRA'],['Mensik','CZE'],['Fonseca','BRA'],['Khachanov','RUS'],['Lehecka','CZE'],['Machac','CZE'],['Griekspoor','NED'],['Bublik','KAZ'],['Nakashima','USA'],['Struff','GER'],['Norrie','GBR'],['Baez','ARG'],['Etcheverry','ARG'],['Auger','CAN'],['Korda','USA'],['Popyrin','AUS'],['Sonego','ITA'],['Cerundolo','ARG'],['Darderi','ITA'],['Navone','ARG'],['Marozsan','HUN'],['Arnaldi','ITA'],['Bautista','ESP'],['Vukic','AUS'],['Kecmanovic','SRB'],['Carballes','ESP'],['Fognini','ITA'],['Thompson','AUS'],['Halys','FRA'],['Borges','POR'],['Munar','ESP'],['Giron','USA'],['Bergs','BEL'],['Comesana','ARG'],['Jarry','CHI'],['Shapovalov','CAN'],['Berrettini','ITA'],['Wawrinka','SUI'],['Murray','GBR'],['Goffin','BEL'],['Ofner','AUT'],['Zhang','CHN'],['Nishioka','JPN'],['Coric','CRO'],['Djere','SRB'],['Mannarino','FRA'],['Gaston','FRA'],['Moutet','FRA']];
+  const WTA=[['Sabalenka','BLR'],['Swiatek','POL'],['Gauff','USA'],['Rybakina','KAZ'],['Pegula','USA'],['Andreeva','RUS'],['Paolini','ITA'],['Navarro','USA'],['Zheng','CHN'],['Keys','USA'],['Vondrousova','CZE'],['Krejcikova','CZE'],['Kostyuk','UKR'],['Svitolina','UKR'],['Haddad','BRA'],['Kasatkina','AUS'],['Samsonova','RUS'],['Ostapenko','LAT'],['Mertens','BEL'],['Alexandrova','RUS'],['Collins','USA'],['Anisimova','USA'],['Muchova','CZE'],['Badosa','ESP'],['Linette','POL'],['Cirstea','ROU'],['Shnaider','RUS'],['Kalinskaya','RUS'],['Putintseva','KAZ'],['Frech','POL'],['Tomljanovic','AUS'],['Bouzkova','CZE'],['Bronzetti','ITA'],['Sakkari','GRE'],['Azarenka','BLR'],['Vekic','CRO'],['Garcia','FRA'],['Stephens','USA'],['Siegemund','GER'],['Schmiedlova','SVK'],['Tauson','DEN'],['Boulter','GBR'],['Raducanu','GBR'],['Wozniacki','DEN'],['Pavlyuchenkova','RUS'],['Krueger','USA'],['Sherif','EGY'],['Sun','NZL'],['Yastremska','UKR'],['Noskova','CZE'],['Townsend','USA'],['Volynets','USA'],['Stearns','USA'],['Bouzas','ESP'],['Lys','GER'],['Parry','FRA'],['Bucsa','ESP'],['Cocciaretto','ITA'],['Maria','GER'],['Jacquemot','FRA'],['Wang','CHN'],['Birrell','AUS'],['Sramkova','SVK'],['Avanesyan','RUS']];
+  function build(pool){
+    const seeds=pool.slice(0,32), unseeded=pool.slice(32);
+    let uf=0; const nextU=()=>unseeded[(uf++)%unseeded.length];
     const o={};
-    for(let i=1;i<=64;i++){
-      const p1=names[(2*(i-1))%names.length], p2=names[(2*(i-1)+1)%names.length];
-      o[String(i)]={id:String(i),p1:p1,p2:p2,seed1:(i<=16&&i%2===1)?String(((i+1)/2)):'',country1:ctry[(i*2)%ctry.length],seed2:'',country2:ctry[(i*3+1)%ctry.length]};
+    for(let k=0;k<32;k++){                       // seeded matches at odd positions
+      const sNo=SEED_ORDER[k], s=seeds[sNo-1], u=nextU(), match=2*k+1;
+      o[String(match)]={id:String(match),p1:s[0],p2:u[0],seed1:String(sNo),country1:s[1],seed2:'',country2:u[1]};
+    }
+    for(let k=0;k<32;k++){                        // unseeded-vs-unseeded at even positions
+      const a=nextU(),b=nextU(),match=2*k+2;
+      o[String(match)]={id:String(match),p1:a[0],p2:b[0],seed1:'',country1:a[1],seed2:'',country2:b[1]};
     }
     return o;
   }
-  S.matchups={ATP:draw(pool),WTA:draw(wpool)};
+  S.matchups={ATP:build(ATP),WTA:build(WTA)};
   indexPlayers('ATP'); indexPlayers('WTA');
 }
 
