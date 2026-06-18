@@ -7,7 +7,7 @@
 <title>Wimbledon 2026 · Bracket Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -403,7 +403,7 @@ function isoToFlag(i){if(!i||i.length<2)return '';try{return String.fromCodePoin
 function countryFlag(c){const i=toISO2(c);return i?isoToFlag(i):'';}
 
 /* ════════ Config ════════ */
-const AS_URL = 'https://script.google.com/macros/s/AKfycbyT3kctImV4qwYH9B1fK4X3Coa9weQ29wLWSJtDqiaarJeNhWXIs7wZYj_v_UvDByI3/exec'; // ← paste your deployed Apps Script Web App URL here to go live
+const AS_URL = ''; // ← paste your deployed Apps Script Web App URL here to go live
 const params = new URLSearchParams(location.search);
 const DEMO = !AS_URL || params.get('mode')==='demo';
 const ADMIN_ROUTE = params.get('admin')==='1';
@@ -466,8 +466,8 @@ function picksLocked(){
 }
 function redrawWindowOpen(){
   const t=S.tournament||{};
-  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-05T04:00:00Z');
-  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-06T10:00:00Z');
+  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-04T22:00:00Z');
+  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-05T10:00:00Z');
   const n=new Date(); return n>=o&&n<=c;
 }
 function countdown(){
@@ -748,7 +748,10 @@ function setTab(pg){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.pg===pg));
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   $('pg-'+pg).classList.add('on');
-  if(pg==='leaderboard'){ if(!DEMO) loadData(); renderLeaderboard(); }
+  if(pg==='leaderboard'){
+    renderLeaderboard();
+    if(!DEMO && Date.now()-(S.lastLoad||0)>15000){ loadData().then(()=>{ if(S.tab==='leaderboard') renderLeaderboard(); }); }
+  }
 }
 function setDraw(d){
   S.draw=d; S.redrawActive=false;
@@ -866,6 +869,7 @@ async function loadData(){
     if(d.leaderboard) S.leaderboard=d.leaderboard;
     // restore this user's submitted entries (leaderboard is already scoped to this bracket)
     S.leaderboard.forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
+    S.lastLoad=Date.now();
   }catch(e){ /* offline-safe */ }
 }
 
