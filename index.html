@@ -403,7 +403,7 @@ function isoToFlag(i){if(!i||i.length<2)return '';try{return String.fromCodePoin
 function countryFlag(c){const i=toISO2(c);return i?isoToFlag(i):'';}
 
 /* ════════ Config ════════ */
-const AS_URL = ''; // ← paste your deployed Apps Script Web App URL here to go live
+const AS_URL = 'https://script.google.com/macros/s/AKfycbyT3kctImV4qwYH9B1fK4X3Coa9weQ29wLWSJtDqiaarJeNhWXIs7wZYj_v_UvDByI3/exec'; // ← live Apps Script Web App URL
 const params = new URLSearchParams(location.search);
 const DEMO = !AS_URL || params.get('mode')==='demo';
 const ADMIN_ROUTE = params.get('admin')==='1';
