@@ -481,12 +481,12 @@ function countdown(){
 }
 
 /* ════════ Bracket helpers ════════ */
-function playerObj(draw,name){return S.players[draw][name]||{name:name,seed:'',flag:''};}
+function playerObj(draw,name){return S.players[draw][name]||{name:name,seed:'',flag:'',rank:null};}
 function indexPlayers(draw){
   const idx={};
   Object.values(S.matchups[draw]||{}).forEach(m=>{
-    if(m.p1 && (!idx[m.p1] || (!idx[m.p1].seed && m.seed1))) idx[m.p1]={name:m.p1,seed:m.seed1||'',flag:countryFlag(m.country1)};
-    if(m.p2 && (!idx[m.p2] || (!idx[m.p2].seed && m.seed2))) idx[m.p2]={name:m.p2,seed:m.seed2||'',flag:countryFlag(m.country2)};
+    if(m.p1 && (!idx[m.p1] || (!idx[m.p1].seed && m.seed1))) idx[m.p1]={name:m.p1,seed:String(m.seed1||'').toUpperCase(),flag:countryFlag(m.country1),rank:rankNum(m.rank1)};
+    if(m.p2 && (!idx[m.p2] || (!idx[m.p2].seed && m.seed2))) idx[m.p2]={name:m.p2,seed:String(m.seed2||'').toUpperCase(),flag:countryFlag(m.country2),rank:rankNum(m.rank2)};
   });
   S.players[draw]=idx;
 }
@@ -597,7 +597,7 @@ function renderBracket(){
   // auto-fill control (only when fully editable)
   if(!S.submitted[draw] && !picksLocked()){
     const af=document.createElement('div'); af.className='afill-bar';
-    af.innerHTML='<span class="q"><b>Auto-fill '+draw+':</b> advance favorites by seed, or pick at random.</span><button data-mode="fav">Favorites</button><button data-mode="random">Random</button>';
+    af.innerHTML='<span class="q"><b>Auto-fill '+draw+':</b> advance favorites by seed & ranking, or pick at random.</span><button data-mode="fav">Favorites</button><button data-mode="random">Random</button>';
     af.querySelectorAll('button').forEach(b=>b.onclick=()=>startAutofill(draw,b.dataset.mode));
     wrap.appendChild(af);
   }
@@ -696,6 +696,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 
 /* ════════ Auto-fill ════════ */
 function seedNum(s){const n=parseInt(s,10);return isNaN(n)?null:n;}
+function rankNum(s){const n=parseInt(s,10);return(isNaN(n)||n<=0)?null:n;}
 function autofill(draw,mode){
   S.picks[draw]=blankPicks();
   for(let r=0;r<ROUNDS.length;r++){
@@ -707,16 +708,26 @@ function autofill(draw,mode){
       if(b&&!a){S.picks[draw][rk][m]=b.name;continue;}
       let w;
       if(mode==='random'){ w=Math.random()<0.5?a:b; }
-      else { const sa=seedNum(a.seed),sb=seedNum(b.seed);
-        if(sa!=null&&sb!=null) w=(sa<=sb)?a:b;
-        else if(sa!=null) w=a; else if(sb!=null) w=b; else w=Math.random()<0.5?a:b; }
+      else {
+        const sa=seedNum(a.seed),sb=seedNum(b.seed);
+        if(sa!=null&&sb!=null) w=(sa<=sb)?a:b;          // both seeded → lower seed
+        else if(sa!=null) w=a;                          // one seeded → seeded
+        else if(sb!=null) w=b;
+        else {                                          // neither seeded → higher ranking
+          const ra=rankNum(a.rank),rb=rankNum(b.rank);
+          if(ra!=null&&rb!=null) w=(ra<=rb)?a:b;
+          else if(ra!=null) w=a;
+          else if(rb!=null) w=b;
+          else w=(normName(a.name)<=normName(b.name))?a:b; // deterministic, not random
+        }
+      }
       S.picks[draw][rk][m]=w.name;
     }
   }
 }
 function startAutofill(draw,mode){
   if(totalPicks(draw)>0){
-    const label=mode==='fav'?'favorites by seed':'random picks';
+    const label=mode==='fav'?'favorites by seed & ranking':'random picks';
     openModal('<h3>Replace your '+draw+' picks?</h3><div class="msub">Auto-fill ('+label+') overwrites every pick in this draw. You can still change individual picks afterward.</div><div class="mact"><button class="bcf" id="afYes">Auto-fill →</button><button class="bcc" id="afNo">Cancel</button></div>');
     $('afYes').onclick=()=>{closeModal();doAutofill(draw,mode);};
     $('afNo').onclick=closeModal;
@@ -882,15 +893,15 @@ function buildDemoDraw(){
   const WTA=[['Sabalenka','BLR'],['Swiatek','POL'],['Gauff','USA'],['Rybakina','KAZ'],['Pegula','USA'],['Andreeva','RUS'],['Paolini','ITA'],['Navarro','USA'],['Zheng','CHN'],['Keys','USA'],['Vondrousova','CZE'],['Krejcikova','CZE'],['Kostyuk','UKR'],['Svitolina','UKR'],['Haddad','BRA'],['Kasatkina','AUS'],['Samsonova','RUS'],['Ostapenko','LAT'],['Mertens','BEL'],['Alexandrova','RUS'],['Collins','USA'],['Anisimova','USA'],['Muchova','CZE'],['Badosa','ESP'],['Linette','POL'],['Cirstea','ROU'],['Shnaider','RUS'],['Kalinskaya','RUS'],['Putintseva','KAZ'],['Frech','POL'],['Tomljanovic','AUS'],['Bouzkova','CZE'],['Bronzetti','ITA'],['Sakkari','GRE'],['Azarenka','BLR'],['Vekic','CRO'],['Garcia','FRA'],['Stephens','USA'],['Siegemund','GER'],['Schmiedlova','SVK'],['Tauson','DEN'],['Boulter','GBR'],['Raducanu','GBR'],['Wozniacki','DEN'],['Pavlyuchenkova','RUS'],['Krueger','USA'],['Sherif','EGY'],['Sun','NZL'],['Yastremska','UKR'],['Noskova','CZE'],['Townsend','USA'],['Volynets','USA'],['Stearns','USA'],['Bouzas','ESP'],['Lys','GER'],['Parry','FRA'],['Bucsa','ESP'],['Cocciaretto','ITA'],['Maria','GER'],['Jacquemot','FRA'],['Wang','CHN'],['Birrell','AUS'],['Sramkova','SVK'],['Avanesyan','RUS']];
   function build(pool){
     const seeds=pool.slice(0,32), unseeded=pool.slice(32);
-    let uf=0; const nextU=()=>unseeded[(uf++)%unseeded.length];
+    let uf=0; const nextU=()=>{ const i=uf%unseeded.length; uf++; const e=unseeded[i]; return [e[0],e[1],33+i]; };
     const o={};
     for(let k=0;k<32;k++){                       // seeded matches at odd positions
       const sNo=SEED_ORDER[k], s=seeds[sNo-1], u=nextU(), match=2*k+1;
-      o[String(match)]={id:String(match),p1:s[0],p2:u[0],seed1:String(sNo),country1:s[1],seed2:'',country2:u[1]};
+      o[String(match)]={id:String(match),p1:s[0],p2:u[0],seed1:String(sNo),country1:s[1],seed2:'',country2:u[1],rank1:sNo,rank2:u[2]};
     }
     for(let k=0;k<32;k++){                        // unseeded-vs-unseeded at even positions
       const a=nextU(),b=nextU(),match=2*k+2;
-      o[String(match)]={id:String(match),p1:a[0],p2:b[0],seed1:'',country1:a[1],seed2:'',country2:b[1]};
+      o[String(match)]={id:String(match),p1:a[0],p2:b[0],seed1:'',country1:a[1],seed2:'',country2:b[1],rank1:a[2],rank2:b[2]};
     }
     return o;
   }
