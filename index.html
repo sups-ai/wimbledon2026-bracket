@@ -397,10 +397,11 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 
 <script>
 /* ════════ Country code → flag (from countries.js) ════════ */
-const COUNTRY_MAP={USA:'US',GBR:'GB',GER:'DE',SUI:'CH',FRA:'FR',ESP:'ES',ITA:'IT',AUS:'AU',CAN:'CA',ARG:'AR',BRA:'BR',JPN:'JP',CHN:'CN',KOR:'KR',IND:'IN',RSA:'ZA',NZL:'NZ',MEX:'MX',COL:'CO',CHI:'CL',PER:'PE',ECU:'EC',URU:'UY',VEN:'VE',PAR:'PY',DOM:'DO',PUR:'PR',HAI:'HT',JAM:'JM',BAH:'BS',TRI:'TT',BAR:'BB',BER:'BM',BOL:'BO',AUT:'AT',BEL:'BE',NED:'NL',DEN:'DK',SWE:'SE',NOR:'NO',FIN:'FI',POL:'PL',CZE:'CZ',SVK:'SK',HUN:'HU',ROU:'RO',BUL:'BG',CRO:'HR',SRB:'RS',SLO:'SI',BIH:'BA',MNE:'ME',MKD:'MK',ALB:'AL',KOS:'XK',GRE:'GR',POR:'PT',IRL:'IE',UKR:'UA',BLR:'BY',EST:'EE',LAT:'LV',LTU:'LT',GEO:'GE',ARM:'AM',AZE:'AZ',CYP:'CY',MLT:'MT',LUX:'LU',MON:'MC',AND:'AD',LIE:'LI',ISL:'IS',TPE:'TW',HKG:'HK',THA:'TH',PHI:'PH',INA:'ID',MAS:'MY',SIN:'SG',VIE:'VN',PAK:'PK',SRI:'LK',BAN:'BD',KAZ:'KZ',UZB:'UZ',TKM:'TM',KGZ:'KG',TJK:'TJ',MGL:'MN',FIJ:'FJ',SAM:'WS',ISR:'IL',LIB:'LB',JOR:'JO',KSA:'SA',UAE:'AE',QAT:'QA',KUW:'KW',BRN:'BH',OMA:'OM',IRI:'IR',TUN:'TN',ALG:'DZ',MAR:'MA',EGY:'EG',NGR:'NG',KEN:'KE',ZIM:'ZW',MOZ:'MZ'};
-function toISO2(c){if(!c)return null;const u=String(c).toUpperCase().trim();return COUNTRY_MAP[u]||u.slice(0,2);}
+const COUNTRY_MAP={USA:'US',GBR:'GB',GER:'DE',SUI:'CH',FRA:'FR',ESP:'ES',ITA:'IT',AUS:'AU',CAN:'CA',ARG:'AR',BRA:'BR',JPN:'JP',CHN:'CN',KOR:'KR',IND:'IN',RSA:'ZA',NZL:'NZ',MEX:'MX',COL:'CO',CHI:'CL',PER:'PE',ECU:'EC',URU:'UY',VEN:'VE',PAR:'PY',DOM:'DO',PUR:'PR',HAI:'HT',JAM:'JM',BAH:'BS',TRI:'TT',BAR:'BB',BER:'BM',BOL:'BO',AUT:'AT',BEL:'BE',NED:'NL',DEN:'DK',SWE:'SE',NOR:'NO',FIN:'FI',POL:'PL',CZE:'CZ',SVK:'SK',HUN:'HU',ROU:'RO',BUL:'BG',CRO:'HR',SRB:'RS',SLO:'SI',BIH:'BA',MNE:'ME',MKD:'MK',ALB:'AL',KOS:'XK',GRE:'GR',TUR:'TR',POR:'PT',IRL:'IE',UKR:'UA',BLR:'BY',EST:'EE',LAT:'LV',LTU:'LT',GEO:'GE',ARM:'AM',AZE:'AZ',CYP:'CY',MLT:'MT',LUX:'LU',MON:'MC',AND:'AD',LIE:'LI',ISL:'IS',TPE:'TW',HKG:'HK',THA:'TH',PHI:'PH',INA:'ID',MAS:'MY',SIN:'SG',VIE:'VN',PAK:'PK',SRI:'LK',BAN:'BD',KAZ:'KZ',UZB:'UZ',TKM:'TM',KGZ:'KG',TJK:'TJ',MGL:'MN',FIJ:'FJ',SAM:'WS',ISR:'IL',LIB:'LB',JOR:'JO',KSA:'SA',UAE:'AE',QAT:'QA',KUW:'KW',BRN:'BH',OMA:'OM',IRI:'IR',TUN:'TN',ALG:'DZ',MAR:'MA',EGY:'EG',NGR:'NG',KEN:'KE',ZIM:'ZW',MOZ:'MZ'};
+function toISO2(c){if(!c)return null;const u=String(c).toUpperCase().trim();if(COUNTRY_MAP[u])return COUNTRY_MAP[u];return u.length===2?u:null;}
 function isoToFlag(i){if(!i||i.length<2)return '';try{return String.fromCodePoint(i.codePointAt(0)-65+0x1F1E6,i.codePointAt(1)-65+0x1F1E6);}catch(e){return '';}}
-function countryFlag(c){const i=toISO2(c);return i?isoToFlag(i):'';}
+const NO_FLAG={RUS:1,BLR:1,RU:1,BY:1};
+function countryFlag(c){if(c&&NO_FLAG[String(c).toUpperCase().trim()])return '';const i=toISO2(c);return i?isoToFlag(i):'';}
 
 /* ════════ Config ════════ */
 const AS_URL = 'https://script.google.com/macros/s/AKfycbyT3kctImV4qwYH9B1fK4X3Coa9weQ29wLWSJtDqiaarJeNhWXIs7wZYj_v_UvDByI3/exec'; // ← live Apps Script Web App URL
@@ -687,10 +688,19 @@ function setPick(draw,rIdx,rk,m,name){
   else S.picks[draw][rk][m]=name;
   reconcile(draw);
   // auto-advance open round if this one just completed
+  let advanced=false;
   if(roundComplete(draw,rIdx)){
-    for(let i=rIdx+1;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){S.open[draw]=ROUNDS[i].key;break;} }
+    for(let i=rIdx+1;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){S.open[draw]=ROUNDS[i].key;advanced=true;break;} }
   }
   render();
+  // completing a round collapses it; without re-anchoring, the lost height drops the
+  // viewport to the champion. Bring the newly-opened round up under the sticky header.
+  if(advanced){
+    requestAnimationFrame(()=>{
+      const el=document.querySelector('.acc.active'); const hdr=document.querySelector('.hdr');
+      if(el){ const off=(hdr?hdr.offsetHeight:0)+12; const y=el.getBoundingClientRect().top+window.scrollY-off; window.scrollTo({top:Math.max(0,y),behavior:'smooth'}); }
+    });
+  }
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
@@ -853,10 +863,12 @@ function openPicks(e){
     const cls=hasRes?(correct===total&&total>0?'correct':(correct>0?'':'wrong')):'';
     rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp '+cls+'">'+(hasRes?(correct+'/'+total+' correct'):(total+' picks'))+'</span></div>';
   });
-  const champName=(e.picks&&e.picks.Final&&e.picks.Final[1])||'—';
+  const champName=(e.picks&&e.picks.Final&&e.picks.Final[1])||'';
+  const champFlag=champName?((playerObj(draw,champName)||{}).flag||''):'';
+  const champCell=champName?((champFlag?champFlag+' ':'')+esc(champName)):'—';
   const body='<h3>'+esc(e.name)+'</h3><div class="msub">'+esc(e.role||'')+' · '+draw+' · '+e.score+' pts</div>'
     +rows
-    +'<div class="mrow"><span class="rn">Champion</span><span class="rp">'+esc(champName)+'</span></div>'
+    +'<div class="mrow"><span class="rn">Champion</span><span class="rp">'+champCell+'</span></div>'
     +'<div class="mact"><button class="bcc" id="closePicks" style="flex:1">Close</button></div>';
   openModal(body); $('closePicks').onclick=closeModal;
 }
