@@ -508,7 +508,9 @@ function reconcile(draw){
     for(let m=1;m<=ROUNDS[r].n;m++){
       const pk=S.picks[draw][rk][m]; if(!pk) continue;
       const [a,b]=competitors(draw,r,m);
-      if(!((a&&a.name===pk)||(b&&b.name===pk))) delete S.picks[draw][rk][m];
+      // clear the pick if the match isn't fully formed yet (a side is undetermined)
+      // or the picked player isn't actually in it — prevents "ghost winner vs TBD"
+      if(!a || !b || !(a.name===pk || b.name===pk)) delete S.picks[draw][rk][m];
     }
   }
 }
@@ -899,7 +901,7 @@ async function loadData(){
     if(d.tournament) S.tournament=d.tournament;
     if(d.leaderboard) S.leaderboard=d.leaderboard;
     // restore this user's submitted entries (leaderboard is already scoped to this bracket)
-    S.leaderboard.forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
+    S.leaderboard.forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks && !S.editing[dr]) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
     S.lastLoad=Date.now();
   }catch(e){ /* offline-safe */ }
 }
@@ -1054,7 +1056,7 @@ function init(){
   document.querySelectorAll('.lbtab').forEach(t=>t.onclick=()=>setLb(t.dataset.lb));
   $('reviewBtn').onclick=openReview;
   // periodic refresh of live data
-  if(!DEMO) setInterval(()=>{ if(S.user){ loadData().then(()=>{ if(S.tab==='bracket') renderBracket(); else renderLeaderboard(); renderHeader(); }); } }, 60000);
+  if(!DEMO) setInterval(()=>{ if(S.user){ loadData().then(()=>{ const editingNow=S.editing&&(S.editing.ATP||S.editing.WTA); if(S.tab==='bracket'){ if(!editingNow) renderBracket(); } else renderLeaderboard(); renderHeader(); }); } }, 60000);
 }
 init();
 </script>
