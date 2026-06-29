@@ -444,6 +444,7 @@ const S={
   picks:{ATP:blankPicks(),WTA:blankPicks()},
   finalSetSum:{ATP:'',WTA:''},
   submitted:{ATP:false,WTA:false},
+  editing:{ATP:false,WTA:false},
   redrawUsed:{ATP:false,WTA:false},
   redrawActive:false,
   open:{ATP:'R1',WTA:'R1'},
@@ -547,6 +548,7 @@ function clientScore(draw){
 /* editable: which rounds can be changed right now */
 function roundEditable(draw,rIdx){
   if(S.submitted[draw]){
+    if(S.editing[draw] && !picksLocked()) return true;            // re-pick mode: all rounds editable until deadline
     if(S.redrawActive && redrawWindowOpen() && !S.redrawUsed[draw]) return rIdx>=3; // R16+
     return false;
   }
@@ -577,11 +579,16 @@ function renderBracket(){
   if(DEMO) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-sample"><b>Sample draw.</b> Players are placeholders — the real 2026 draw loads from the API on Fri June 26.</div>');
   if(picksLocked() && !S.submitted[draw]) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
   if(S.submitted[draw]){
-    let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> Scores update automatically.</span>';
-    if(redrawWindowOpen() && !S.redrawUsed[draw] && !S.redrawActive) html+='<button class="mini-btn" id="redrawBtn">Use redraw</button>';
-    if(S.redrawActive) html+='<button class="mini-btn" id="redrawSaveBtn">Save redraw</button>';
-    html+='</div>';
-    bw.insertAdjacentHTML('beforeend',html);
+    if(S.editing[draw] && !picksLocked()){
+      bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-done"><span><b>Editing your '+draw+' picks.</b> Change anything, then re-submit before the deadline.</span></div>');
+    } else {
+      let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> Scores update automatically.</span>';
+      if(!picksLocked()) html+='<button class="mini-btn" id="editBtn">Edit picks</button>';
+      if(redrawWindowOpen() && !S.redrawUsed[draw] && !S.redrawActive) html+='<button class="mini-btn" id="redrawBtn">Use redraw</button>';
+      if(S.redrawActive) html+='<button class="mini-btn" id="redrawSaveBtn">Save redraw</button>';
+      html+='</div>';
+      bw.insertAdjacentHTML('beforeend',html);
+    }
   }
 
   // determine open round: explicit key, '__none__' = all collapsed, else auto-open active
@@ -596,7 +603,7 @@ function renderBracket(){
   }
 
   // auto-fill control (only when fully editable)
-  if(!S.submitted[draw] && !picksLocked()){
+  if((!S.submitted[draw] || S.editing[draw]) && !picksLocked()){
     const af=document.createElement('div'); af.className='afill-bar';
     af.innerHTML='<span class="q"><b>Auto-fill '+draw+':</b> advance favorites by seed & ranking, or pick at random.</span><button data-mode="fav">Favorites</button><button data-mode="random">Random</button>';
     af.querySelectorAll('button').forEach(b=>b.onclick=()=>startAutofill(draw,b.dataset.mode));
@@ -655,11 +662,12 @@ function renderBracket(){
   const credit=document.createElement('div'); credit.className='credit'; credit.textContent='downtheline™'; wrap.appendChild(credit);
 
   // wire redraw buttons
+  const eb=$('editBtn'); if(eb) eb.onclick=()=>{ S.editing[S.draw]=true; toast('Editing your picks — make changes, then re-submit before the deadline.'); renderBracket(); };
   const rb=$('redrawBtn'); if(rb) rb.onclick=()=>{ S.redrawActive=true; toast('Redraw open — edit Round of 16 onward, then Save redraw.'); renderBracket(); };
   const rs=$('redrawSaveBtn'); if(rs) rs.onclick=submitRedraw;
 
   // submit bar
-  const sb=$('sbar'); const showBar = !S.submitted[draw] && !picksLocked();
+  const sb=$('sbar'); const showBar = (!S.submitted[draw] || S.editing[draw]) && !picksLocked();
   sb.classList.toggle('show', showBar);
   $('pcount').textContent=totalPicks(draw);
   $('reviewBtn').disabled = totalPicks(draw)!==127;
@@ -790,7 +798,7 @@ function openReview(){
     rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp">'+picksFor+'/'+R.n+' ✓</span></div>';
   });
   const champName=S.picks[draw]['Final'][1];
-  const body='<h3>Review your '+draw+' bracket</h3><div class="msub">Once submitted, picks lock at the deadline and can\'t be changed (except via your one redraw).</div>'
+  const body='<h3>Review your '+draw+' bracket</h3><div class="msub">You can come back and edit until the deadline; picks lock when the deadline passes.</div>'
     +rows
     +'<div class="mrow"><span class="rn">Champion</span><span class="rp">'+(champName?esc(champName):'—')+'</span></div>'
     +'<div class="mact"><button class="bcf" id="confirmSub">Lock in '+draw+' picks →</button><button class="bcc" id="cancelSub">Back</button></div>';
@@ -802,10 +810,10 @@ async function confirmSubmit(){
   const draw=S.draw;
   const btn=$('confirmSub'); btn.disabled=true; btn.textContent='Submitting…';
   const payload={type:'entry',passcode:S.passcode,name:S.user,role:S.role,draw:draw,picks:S.picks[draw],finalSetSum:parseInt(S.finalSetSum[draw])||0};
-  if(DEMO){ S.submitted[draw]=true; renderBracket(); postSubmitNudge(draw); return; }
+  if(DEMO){ S.submitted[draw]=true; S.editing[draw]=false; renderBracket(); postSubmitNudge(draw); return; }
   try{
     const res=await apiPost(payload);
-    if(res.success){ S.submitted[draw]=true; renderBracket(); postSubmitNudge(draw); }
+    if(res.success){ S.submitted[draw]=true; S.editing[draw]=false; renderBracket(); postSubmitNudge(draw); }
     else { btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast(res.error||'Submit failed.',true); }
   }catch(e){ btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast('Network error — try again.',true); }
 }
