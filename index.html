@@ -16,7 +16,7 @@
   --royal:#4B2E83; --royal-soft:#F0ECF7;
   --gold:#B08D2D; --gold-soft:#F7F0DE;
   --err:#C0392B;
-  --line:rgba(20,24,27,.09); --line2:rgba(20,24,27,.05);
+  --line:rgba(20,24,27,.09); --line2:rgba(20,24,27,.05); --conn:#E9E6F2;
   --disp:'Bricolage Grotesque',system-ui,sans-serif;
   --ui:'DM Sans',system-ui,sans-serif;
   --r:12px;
@@ -180,23 +180,23 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .slot{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;position:relative;min-height:48px;transition:background .12s}
 .slot+.slot{border-top:1px solid var(--line2)}
 .slot:hover:not(.tbd):not(.fixed){background:#FBFBFA}
-.slot.sel{background:var(--grass-soft)}
 .slot::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .14s}
-.slot.sel::before{background:var(--grass)}
-.slot.win::before{background:var(--gold)}
-.slot.win{background:var(--gold-soft)}
+.slot.sel{background:var(--royal-soft)}
+.slot.sel::before{background:var(--royal)}
+.slot.win::before{background:var(--grass)}
+.slot.win{background:var(--grass-soft)}
 .s-sd{font-size:11px;font-weight:600;color:var(--faint);width:18px;text-align:center;flex-shrink:0;font-variant-numeric:tabular-nums}
 .s-fl{font-size:17px;flex-shrink:0;width:20px;text-align:center}
 .s-nm{flex:1;font-size:14.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.slot.sel .s-nm{color:var(--grass-deep);font-weight:600}
-.slot.win .s-nm{color:var(--gold);font-weight:700}
+.slot.sel .s-nm{font-weight:700;color:var(--royal)}
+.slot.win .s-nm{color:var(--grass-deep);font-weight:700}
 .slot.out{opacity:.4} .slot.out .s-nm{text-decoration:line-through}
-.s-pick{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:grid;place-items:center;transition:all .14s}
-.slot.sel .s-pick{border-color:var(--grass);background:var(--grass)}
+.s-pick{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .14s}
+.slot.sel .s-pick{border-color:var(--royal);background:var(--royal)}
 .slot.sel .s-pick::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
 .slot.tbd{cursor:default} .slot.tbd .s-nm{color:var(--faint);font-style:italic;font-weight:400} .slot.tbd .s-pick{display:none}
 .slot.fixed{cursor:default}
-.s-res{font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+.s-res{font-size:10px;font-weight:700;color:var(--grass);flex-shrink:0}
 
 /* CHAMP */
 .champ{margin-top:4px;border:1.5px solid var(--gold);border-radius:var(--r);background:linear-gradient(160deg,var(--gold-soft),#fff 70%);padding:20px;text-align:center}
@@ -275,6 +275,68 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 
 @media(min-width:560px){.wrap{padding-left:24px;padding-right:24px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── QF redraw / late-entry screen ── */
+.qfscreen{position:fixed;inset:0;z-index:320;background:var(--paper);display:none;flex-direction:column;overflow-y:auto}
+.qfscreen.show{display:flex}
+.qf-head{position:sticky;top:0;background:var(--paper);border-bottom:1px solid var(--line);padding:16px 20px 12px;z-index:2}
+.qf-htitle{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--ink);line-height:1.1}
+.qf-htitle .yr{color:var(--gold)}
+.qf-hsub{font-size:12.5px;color:var(--soft);margin-top:4px}
+.qf-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:26px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+.qf-close:hover{color:var(--ink)}
+.qf-drawtabs{display:flex;gap:8px;margin-top:12px}
+.qf-dt{background:none;border:1px solid var(--line);border-radius:8px;padding:7px 16px;font-size:12.5px;font-weight:600;color:var(--soft);cursor:pointer}
+.qf-dt.on{background:var(--royal);border-color:var(--royal);color:#fff}
+.qf-body{flex:1;padding:18px 20px 120px;max-width:1120px;margin:0 auto;width:100%;box-sizing:border-box}
+.qf-note{background:var(--royal-soft);border:1px solid #D9CBEF;color:var(--royal);border-radius:9px;padding:12px 14px;font-size:12.5px;line-height:1.5}
+.qf-wait{text-align:center;color:var(--soft);font-size:13px;padding:60px 20px}
+.qf-heads{display:flex;max-width:1040px;margin:2px auto 4px}
+.qf-h{flex:1 0 236px;min-width:236px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--royal)}
+.qf-bracket{display:flex;align-items:stretch;min-height:540px;max-width:1040px;margin:0 auto;overflow-x:auto;padding:6px 0 14px}
+.qfr{display:flex;flex-direction:column;justify-content:space-around;flex:1 0 236px;min-width:236px}
+.qfp{display:flex;flex-direction:column;justify-content:space-around;flex:1;position:relative}
+.qf-match{margin:11px 22px;background:#fff;border:1px solid rgba(20,24,27,.12);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(16,40,24,.04),0 4px 14px rgba(16,40,24,.05);position:relative;transition:border-color .14s,box-shadow .16s}
+.qf-match:hover{border-color:rgba(75,46,131,.28);box-shadow:0 3px 8px rgba(16,40,24,.06),0 8px 22px rgba(16,40,24,.07)}
+.qfr.feed .qfp .qf-match::after{content:'';position:absolute;left:100%;top:50%;width:12px;height:1.5px;background:var(--conn)}
+.qfr.feed .qfp::after{content:'';position:absolute;right:10px;top:25%;height:50%;width:1.5px;background:var(--conn)}
+.qfr.feed .qfp::before{content:'';position:absolute;right:-22px;top:50%;width:32px;height:1.5px;background:var(--conn)}
+.qf-slot{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;position:relative;min-height:50px;transition:background .12s}
+.qf-slot+.qf-slot{border-top:1px solid var(--line2)}
+.qf-slot:not(.tbd):hover{background:#FBFAFC}
+.qf-slot.sel{background:var(--royal-soft)}
+.qf-slot.sel .qf-nm{font-weight:700;color:var(--royal)}
+.qf-slot.win{background:var(--grass-soft)}
+.qf-slot.win .qf-nm{color:var(--grass-deep);font-weight:700}
+.qf-slot.tbd{cursor:default}
+.qf-slot.tbd .qf-nm{color:var(--faint);font-style:italic;font-weight:400}
+.qf-seed{font-size:11px;font-weight:600;color:var(--faint);min-width:16px;text-align:center;flex-shrink:0;font-variant-numeric:tabular-nums}
+.qf-flag{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.qf-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;font-weight:500;color:var(--ink)}
+.qf-pick{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qf-slot.sel .qf-pick{border-color:var(--royal);background:var(--royal)}
+.qf-slot.sel .qf-pick::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+.qf-slot.tbd .qf-pick{display:none}
+.qf-champ{margin-top:18px;text-align:center}
+.qf-champ .ch-l{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.qf-champ .ch-n{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--ink);margin-top:4px}
+.qf-champ .ch-n .qf-flag{font-size:18px}
+.qf-tb{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
+.qf-tb-l{font-size:12.5px;font-weight:600;color:var(--ink)}
+.qf-tb-h{font-size:11.5px;color:var(--soft);margin-top:3px;line-height:1.5}
+.qf-games{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.qf-game{width:44px;height:40px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;transition:all .12s}
+.qf-game:hover{border-color:var(--grass)}
+.qf-game.on{background:var(--grass);border-color:var(--grass);color:#fff}
+.qf-savebar{position:fixed;bottom:0;left:0;right:0;background:var(--paper);border-top:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;z-index:3}
+.qf-savebar .ss{flex:1;font-size:12.5px;color:var(--soft)}
+.qf-savebar .ss b{color:var(--ink);font-weight:600}
+.qf-save{background:var(--grass);color:#fff;border:none;border-radius:9px;padding:12px 22px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.qf-save:disabled{background:var(--line);color:var(--faint);cursor:not-allowed}
+/* leaderboard badge */
+.lb-badge{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:7px;vertical-align:middle;background:var(--royal-soft);color:var(--royal)}
+.lb-badge.newqf{background:var(--gold-soft);color:var(--gold)}
+@media(max-width:600px){.qfr,.qf-h{flex:0 0 66vw;min-width:190px}.qf-body{padding-left:12px;padding-right:12px}}
 </style>
 </head>
 <body>
@@ -439,6 +501,24 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
   </div>
 </div>
 
+<!-- QF REDRAW / LATE ENTRY -->
+<div class="qfscreen" id="qfScreen">
+  <div class="qf-head">
+    <div class="qf-htitle">Quarterfinal <span class="yr" id="qfModeWord">redraw</span></div>
+    <div class="qf-hsub" id="qfSub"></div>
+    <button class="qf-close" id="qfClose" aria-label="Close">&times;</button>
+    <div class="qf-drawtabs">
+      <button class="qf-dt on" data-d="ATP">ATP</button>
+      <button class="qf-dt" data-d="WTA">WTA</button>
+    </div>
+  </div>
+  <div class="qf-body" id="qfBody"></div>
+  <div class="qf-savebar" id="qfSaveBar" style="display:none">
+    <div class="ss" id="qfSaveMsg"></div>
+    <button class="qf-save" id="qfSaveBtn" disabled>Save</button>
+  </div>
+</div>
+
 <!-- REVIEW / PICKS MODAL -->
 <div class="mbk" id="modal"><div class="mdl" id="modalBody"></div></div>
 <div class="toast" id="toast"></div>
@@ -494,7 +574,6 @@ const S={
   submitted:{ATP:false,WTA:false},
   editing:{ATP:false,WTA:false},
   redrawUsed:{ATP:false,WTA:false},
-  redrawActive:false,
   open:{ATP:'R1',WTA:'R1'},
 };
 
@@ -516,8 +595,8 @@ function picksLocked(){
 }
 function redrawWindowOpen(){
   const t=S.tournament||{};
-  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-04T22:00:00Z');
-  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-05T10:00:00Z');
+  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-06T22:00:00Z');
+  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-07T10:00:00Z');
   const n=new Date(); return n>=o&&n<=c;
 }
 function countdown(){
@@ -599,8 +678,7 @@ function clientScore(draw){
 function roundEditable(draw,rIdx){
   if(S.submitted[draw]){
     if(S.editing[draw] && !picksLocked()) return true;            // re-pick mode: all rounds editable until deadline
-    if(S.redrawActive && redrawWindowOpen() && !S.redrawUsed[draw]) return rIdx>=3; // R16+
-    return false;
+    return false;                                                 // QF redraw lives in its own screen (openQf)
   }
   return !picksLocked();
 }
@@ -635,8 +713,7 @@ function renderBracket(){
     } else {
       let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> Scores update automatically.</span>';
       if(!picksLocked()) html+='<button class="mini-btn" id="editBtn">Edit picks</button>';
-      if(redrawWindowOpen() && !S.redrawUsed[draw] && !S.redrawActive) html+='<button class="mini-btn" id="redrawBtn">Use redraw</button>';
-      if(S.redrawActive) html+='<button class="mini-btn" id="redrawSaveBtn">Save redraw</button>';
+      if(redrawWindowOpen()) html+='<button class="mini-btn" id="qfOpenBtn">'+(S.redrawUsed[draw]?'Adjust QF redraw':'Use QF redraw')+'</button>';
       html+='</div>';
       bw.insertAdjacentHTML('beforeend',html);
     }
@@ -714,8 +791,7 @@ function renderBracket(){
 
   // wire redraw buttons
   const eb=$('editBtn'); if(eb) eb.onclick=()=>{ S.editing[S.draw]=true; toast('Editing your picks — make changes, then re-submit before the deadline.'); renderBracket(); };
-  const rb=$('redrawBtn'); if(rb) rb.onclick=()=>{ S.redrawActive=true; toast('Redraw open — edit Round of 16 onward, then Save redraw.'); renderBracket(); };
-  const rs=$('redrawSaveBtn'); if(rs) rs.onclick=submitRedraw;
+  const qob=$('qfOpenBtn'); if(qob) qob.onclick=()=>openQf(S.draw);
 
   // submit bar
   const sb=$('sbar'); const showBar = (!S.submitted[draw] || S.editing[draw]) && !picksLocked();
@@ -834,7 +910,7 @@ function setTab(pg){
   }
 }
 function setDraw(d){
-  S.draw=d; S.redrawActive=false;
+  S.draw=d;
   document.querySelectorAll('.draw').forEach(b=>b.classList.toggle('on',b.dataset.draw===d));
   renderBracket();
 }
@@ -868,31 +944,181 @@ async function confirmSubmit(){
     else { btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast(res.error||'Submit failed.',true); }
   }catch(e){ btn.disabled=false; btn.textContent='Lock in '+draw+' picks →'; toast('Network error — try again.',true); }
 }
-async function submitRedraw(){
-  const draw=S.draw;
-  const payload={type:'redraw',passcode:S.passcode,name:S.user,draw:draw,picks:{R16:S.picks[draw].R16,QF:S.picks[draw].QF,SF:S.picks[draw].SF,Final:S.picks[draw].Final}};
-  if(DEMO){ S.redrawUsed[draw]=true; S.redrawActive=false; toast('Redraw applied (demo · −'+REDRAW_PENALTY+').'); renderBracket(); return; }
+
+/* ════════ QF redraw / late entry (isolated surface) ════════ */
+S.qf={ draw:'ATP', picks:{ATP:{QF:{},SF:{},Final:{}},WTA:{QF:{},SF:{},Final:{}}}, games:{ATP:'',WTA:''} };
+function blankQf(){ return {QF:{},SF:{},Final:{}}; }
+const QF_GAMES=[6,7,8,9,10,12,13];
+const QF_ROUNDS=[{key:'QF',label:'Quarterfinals',n:4},{key:'SF',label:'Semifinals',n:2},{key:'Final',label:'Final',n:1}];
+
+// Replay the real results by bracket position → actual winner at each round/slot.
+function computeActualWinners(draw){
+  const aw={}; ROUNDS.forEach(R=>aw[R.key]={});
+  for(let r=0;r<ROUNDS.length;r++){
+    const rk=ROUNDS[r].key;
+    const wins=Object.values((S.results[draw]||{})[rk]||{}).filter(Boolean);
+    const isWin=nm=>nm&&wins.some(w=>namesMatch(w,nm));
+    for(let m=1;m<=ROUNDS[r].n;m++){
+      let a,b;
+      if(r===0){ const mu=S.matchups[draw][String(m)]; a=mu?mu.p1:null; b=mu?mu.p2:null; }
+      else { a=aw[ROUNDS[r-1].key][2*m-1]; b=aw[ROUNDS[r-1].key][2*m]; }
+      aw[rk][m]= isWin(a)?a:(isWin(b)?b:null);
+    }
+  }
+  return aw;
+}
+// The 8 QF players by position (or nulls if R16 isn't fully resolved yet).
+function qfField(draw){
+  const aw=computeActualWinners(draw); const f=[];
+  for(let m=1;m<=4;m++) f.push([aw.R16[2*m-1]||null, aw.R16[2*m]||null]);
+  return f;
+}
+function qfFieldReady(draw){ return qfField(draw).every(p=>p[0]&&p[1]); }
+// Competitors for a QF-screen match: QF from real field, SF/Final from the user's redraw picks.
+function qfCompetitors(draw,rk,m){
+  if(rk==='QF'){ const f=qfField(draw); return f[m-1]||[null,null]; }
+  const prev=rk==='SF'?'QF':'SF';
+  const p=S.qf.picks[draw];
+  return [p[prev][2*m-1]||null, p[prev][2*m]||null];
+}
+function qfReconcile(draw){
+  const p=S.qf.picks[draw];
+  ['SF','Final'].forEach(rk=>{
+    const n=rk==='SF'?2:1;
+    for(let m=1;m<=n;m++){ const pk=p[rk][m]; if(!pk) continue;
+      const [a,b]=qfCompetitors(draw,rk,m);
+      if(!a||!b||!(a===pk||b===pk)) delete p[rk][m];
+    }
+  });
+}
+function qfCount(draw){ const p=S.qf.picks[draw]; return Object.values(p.QF).filter(Boolean).length+Object.values(p.SF).filter(Boolean).length+Object.values(p.Final).filter(Boolean).length; }
+function qfComplete(draw){ const p=S.qf.picks[draw]; return Object.values(p.QF).filter(Boolean).length===4 && Object.values(p.SF).filter(Boolean).length===2 && Object.values(p.Final).filter(Boolean).length===1 && QF_GAMES.indexOf(Number(S.qf.games[draw]))!==-1; }
+function qfMode(draw){ return S.submitted[draw] ? 'redraw' : 'new'; }
+
+function openQf(draw){
+  S.qf.draw=draw||S.qf.draw||'ATP';
+  $('qfScreen').classList.add('show');
+  document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===S.qf.draw));
+  renderQf();
+}
+function closeQf(){ $('qfScreen').classList.remove('show'); }
+function qfSetDraw(d){ S.qf.draw=d; document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===d)); renderQf(); }
+function qfPick(draw,rk,m,name){ S.qf.picks[draw][rk][m]=name; qfReconcile(draw); renderQf(); }
+function qfSetGames(draw,v){ S.qf.games[draw]=v; renderQf(); }
+
+function qfSlotHtml(draw,rk,m,side,name){
+  if(!name) return '<div class="qf-slot tbd"><span class="qf-seed"></span><span class="qf-nm">TBD</span><span class="qf-pick"></span></div>';
+  const po=playerObj(draw,name); const sel=S.qf.picks[draw][rk][m]===name;
+  const seed=po.seed?('<span class="qf-seed">'+esc(po.seed)+'</span>'):'<span class="qf-seed"></span>';
+  const flag=po.flag?('<span class="qf-flag">'+po.flag+'</span>'):'<span class="qf-flag"></span>';
+  return '<div class="qf-slot'+(sel?' sel':'')+'" data-rk="'+rk+'" data-m="'+m+'" data-nm="'+escAttr(name)+'">'+seed+flag+'<span class="qf-nm">'+esc(name)+'</span><span class="qf-pick"></span></div>';
+}
+function renderQf(){
+  const draw=S.qf.draw, body=$('qfBody'), mode=qfMode(draw);
+  $('qfModeWord').textContent = mode==='new' ? 'entry' : 'redraw';
+  $('qfSub').innerHTML = (mode==='new'
+    ? 'Join for the quarterfinals onward — start at <b>−100</b> and pick the final 8 through the champion.'
+    : 'Re-pick the quarterfinals through the champion. Keeps your Round-of-16 score; costs <b>100</b> points.')
+    + ' Closes Tue 7 Jul, 6 AM ET.';
+  if(!redrawWindowOpen()){ body.innerHTML='<div class="qf-wait">The QF window isn\u2019t open right now.</div>'; $('qfSaveBar').style.display='none'; return; }
+  if(!qfFieldReady(draw)){ body.innerHTML='<div class="qf-wait">Waiting for the Round of 16 to finish — the quarterfinal field isn\u2019t set yet.</div>'; $('qfSaveBar').style.display='none'; return; }
+
+  const mh=(rk,m)=>{ const [a,b]=qfCompetitors(draw,rk,m); return '<div class="qf-match">'+qfSlotHtml(draw,rk,m,0,a)+qfSlotHtml(draw,rk,m,1,b)+'</div>'; };
+  const bracket='<div class="qf-heads"><div class="qf-h">Quarterfinals</div><div class="qf-h">Semifinals</div><div class="qf-h">Final</div></div>'
+    +'<div class="qf-bracket">'
+    +'<div class="qfr feed"><div class="qfp">'+mh('QF',1)+mh('QF',2)+'</div><div class="qfp">'+mh('QF',3)+mh('QF',4)+'</div></div>'
+    +'<div class="qfr feed"><div class="qfp">'+mh('SF',1)+mh('SF',2)+'</div></div>'
+    +'<div class="qfr"><div class="qfp">'+mh('Final',1)+'</div></div>'
+    +'</div>';
+  const champ=S.qf.picks[draw].Final[1];
+  const champHtml=champ?((playerObj(draw,champ).flag?playerObj(draw,champ).flag+' ':'')+esc(champ)):'—';
+  const games=QF_GAMES.map(g=>'<button class="qf-game'+(Number(S.qf.games[draw])===g?' on':'')+'" data-g="'+g+'">'+g+'</button>').join('');
+
+  body.innerHTML=
+    (mode==='new'?'<div class="qf-note">You\u2019re joining at the quarterfinals. You must complete all picks below to be scored, and you start at −100 points.</div>':'')
+    +bracket
+    +'<div class="qf-champ"><div class="ch-l">Champion</div><div class="ch-n">'+champHtml+'</div></div>'
+    +'<div class="qf-tb"><div class="qf-tb-l">Tiebreak — games in the final set of the championship match</div>'
+    +'<div class="qf-tb-h">If you tie on points, the closest guess wins (then most matches called correctly). A final set can\u2019t end 6\u20135, so 11 isn\u2019t possible.</div>'
+    +'<div class="qf-games">'+games+'</div></div>';
+
+  body.querySelectorAll('.qf-slot:not(.tbd)').forEach(s=>{ s.onclick=()=>qfPick(draw,s.dataset.rk,Number(s.dataset.m),s.dataset.nm); });
+  body.querySelectorAll('.qf-game').forEach(g=>{ g.onclick=()=>qfSetGames(draw,Number(g.dataset.g)); });
+
+  const bar=$('qfSaveBar'); bar.style.display='flex';
+  const done=qfComplete(draw), n=Object.values(S.qf.picks[draw].QF).filter(Boolean).length+Object.values(S.qf.picks[draw].SF).filter(Boolean).length+Object.values(S.qf.picks[draw].Final).filter(Boolean).length;
+  $('qfSaveMsg').innerHTML='<b>'+n+'</b> of 7 picks'+(S.qf.games[draw]?' · tiebreak set':' · tiebreak needed')+' · '+draw;
+  const btn=$('qfSaveBtn'); btn.disabled=!done;
+  btn.textContent=(mode==='new'?'Join at QF':'Save redraw')+' (−100)';
+  btn.onclick=()=>submitQf();
+}
+async function submitQf(){
+  const draw=S.qf.draw, mode=qfMode(draw);
+  if(!qfComplete(draw)){ toast('Complete all 7 picks and the tiebreak first.',true); return; }
+  const btn=$('qfSaveBtn'); btn.disabled=true; const prev=btn.textContent; btn.textContent='Saving…';
+  const picks={QF:S.qf.picks[draw].QF,SF:S.qf.picks[draw].SF,Final:S.qf.picks[draw].Final};
+  const payload=(mode==='new')
+    ? {type:'lateEntry',passcode:S.passcode,name:S.user,role:S.role,draw:draw,picks:picks,finalGames:Number(S.qf.games[draw])}
+    : {type:'redraw',passcode:S.passcode,name:S.user,draw:draw,picks:picks,finalGames:Number(S.qf.games[draw])};
+  if(DEMO){ S.redrawUsed[draw]=true; S.submitted[draw]=true; S.picks[draw]=Object.assign(blankPicks(),S.picks[draw],picks); toast((mode==='new'?'Joined at QF':'Redraw saved')+' (demo · −100).'); afterQfSave(draw); return; }
   try{
     const res=await apiPost(payload);
-    if(res.success){ S.redrawUsed[draw]=true; S.redrawActive=false; toast('Redraw applied (−'+REDRAW_PENALTY+').'); renderBracket(); }
-    else toast(res.error||'Redraw failed.',true);
-  }catch(e){ toast('Network error — try again.',true); }
+    if(res.success){
+      S.redrawUsed[draw]=true; S.submitted[draw]=true;
+      S.picks[draw]=Object.assign(blankPicks(),S.picks[draw],picks);
+      toast((mode==='new'?'Joined at the quarterfinals':'Redraw saved')+' (−100).');
+      await loadData();
+      afterQfSave(draw);
+    } else { btn.disabled=false; btn.textContent=prev; toast(res.error||'Save failed.',true); }
+  }catch(e){ btn.disabled=false; btn.textContent=prev; toast('Network error — try again.',true); }
+}
+function afterQfSave(draw){
+  // if the other draw still needs attention during the window, keep them here; else close.
+  const other=draw==='ATP'?'WTA':'ATP';
+  closeQf(); render(); renderLeaderboard();
 }
 
 /* ════════ Leaderboard ════════ */
 function setLb(v){ S.lbView=v; document.querySelectorAll('.lbtab').forEach(t=>t.classList.toggle('on',t.dataset.lb===v)); renderLeaderboard(); }
 const AVA=['#1A5C2E','#4B2E83','#B08D2D','#2A5A6B','#6B2E4B','#3E5A2A'];
+function matchesCorrect(draw,picks){
+  let c=0; if(!picks) return 0;
+  ROUNDS.forEach(R=>{
+    const wins=Object.values((S.results[draw]&&S.results[draw][R.key])||{}).filter(Boolean);
+    if(!wins.length) return;
+    Object.values(picks[R.key]||{}).forEach(nm=>{ if(nm&&wins.some(w=>namesMatch(w,nm))) c++; });
+  });
+  return c;
+}
+function hasEarlyPicks(picks){ return !!(picks&&picks.R1&&Object.keys(picks.R1).length>0); }
+function badgeFor(redrawUsed,picks){ if(!redrawUsed) return ''; return hasEarlyPicks(picks)?'redrawn':'newqf'; }
+function badgeHtml(kind){
+  if(kind==='redrawn') return '<span class="lb-badge">Redrawn</span>';
+  if(kind==='newqf') return '<span class="lb-badge newqf">New at QF</span>';
+  return '';
+}
 function renderLeaderboard(){
   const body=$('lbBody'); const v=S.lbView;
+  const actual=(S.tournament&&S.tournament.actualFinalGames!=null)?Number(S.tournament.actualFinalGames):null;
   let rows;
   if(v==='combined'){
     const byName={};
-    S.leaderboard.forEach(e=>{ if(!byName[e.name]) byName[e.name]={name:e.name,role:e.role,score:0}; byName[e.name].score+=(e.score||0); });
+    S.leaderboard.forEach(e=>{
+      const dr=String(e.draw).toUpperCase();
+      if(!byName[e.name]) byName[e.name]={name:e.name,role:e.role,score:0,mc:0,badge:''};
+      const b=byName[e.name]; b.score+=(e.score||0); b.mc+=matchesCorrect(dr,e.picks);
+      const bk=badgeFor(e.redrawUsed,e.picks); if(bk&&!b.badge) b.badge=bk; if(bk==='redrawn') b.badge='redrawn';
+    });
     rows=Object.values(byName);
+    rows.sort((a,b)=> b.score!==a.score ? b.score-a.score : (b.mc-a.mc));
   } else {
-    rows=S.leaderboard.filter(e=>String(e.draw).toUpperCase()===v).map(e=>({name:e.name,role:e.role,score:e.score||0,draw:e.draw,picks:e.picks}));
+    rows=S.leaderboard.filter(e=>String(e.draw).toUpperCase()===v).map(e=>({name:e.name,role:e.role,score:e.score||0,draw:e.draw,picks:e.picks,finalGames:e.finalGames||0,redrawUsed:e.redrawUsed,mc:matchesCorrect(v,e.picks),badge:badgeFor(e.redrawUsed,e.picks)}));
+    rows.sort((a,b)=>{
+      if(b.score!==a.score) return b.score-a.score;
+      if(actual!=null && a.finalGames && b.finalGames){ const ca=Math.abs(a.finalGames-actual), cb=Math.abs(b.finalGames-actual); if(ca!==cb) return ca-cb; }
+      return b.mc-a.mc;
+    });
   }
-  rows.sort((a,b)=>b.score-a.score);
   $('lbCount').textContent=rows.length+(rows.length===1?' entry':' entries');
   $('lbUpdated').textContent= S.leaderboard.length?('Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})):'';
   if(!rows.length){ body.innerHTML='<div class="lb-empty">'+(DEMO?'No standings in demo mode.':'No entries yet — be the first to submit.')+'</div>'; return; }
@@ -900,10 +1126,10 @@ function renderLeaderboard(){
   rows.forEach((e,i)=>{
     const me=S.user&&e.name===S.user;
     const ini=e.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    const sub=v==='combined'?(e.role||''):(e.role||'');
+    const sub=e.role||'';
     const el=document.createElement('div'); el.className='lbr'+(me?' me':'');
     el.innerHTML='<div class="lrk">'+(i+1)+'</div><div class="lav" style="background:'+AVA[i%AVA.length]+'">'+ini+'</div>'
-      +'<div class="li"><div class="ln">'+esc(e.name)+'</div><div class="lsu">'+esc(sub)+'</div></div>'
+      +'<div class="li"><div class="ln">'+esc(e.name)+badgeHtml(e.badge)+'</div><div class="lsu">'+esc(sub)+'</div></div>'
       +'<div class="lp">'+e.score+'<div class="lpl">pts</div></div>';
     if(v!=='combined'&&e.picks) el.onclick=()=>openPicks(e);
     body.appendChild(el);
@@ -1014,6 +1240,7 @@ async function gateStep(){
   if(!DEMO) await loadData();
   $('gate').classList.add('gone'); $('app').classList.add('in');
   render(); renderLeaderboard();
+  if(!DEMO && picksLocked() && redrawWindowOpen() && !S.submitted.ATP && !S.submitted.WTA) openQf('ATP');
 }
 
 /* Returning entrant: exact-name + code, matched case/space-insensitively via normName.
@@ -1049,8 +1276,9 @@ async function returningStep(){
    Dates are hardcoded to the agreed QF window for now; when the QF-redraw bundle
    ships it will read S.tournament (RedrawOpen / RedrawDeadline) instead. */
 function qfBannerState(){
-  const o=new Date('2026-07-06T22:00:00Z');   // Mon 6 Jul eve — after R16 completes
-  const c=new Date('2026-07-07T10:00:00Z');   // Tue 7 Jul, 6 AM ET / 11 AM London
+  const t=S.tournament||{};
+  const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-06T22:00:00Z');   // Mon 6 Jul eve — after R16
+  const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-07T10:00:00Z'); // Tue 7 Jul, 6 AM ET
   const n=new Date();
   if(n>c) return null;
   return n>=o ? 'open' : 'soon';
@@ -1065,10 +1293,13 @@ function renderQfBanner(){
     const dkey='qfDismiss_'+state;
     let dismissed=false; try{ dismissed=localStorage.getItem(dkey)==='1'; }catch(e){}
     if(!state || dismissed){ el.style.display='none'; return; }
+    const canAct = id==='qfAppBanner' && state==='open' && S.user;
+    const act = canAct ? ' <a href="#" class="qf-open-link" style="color:inherit;font-weight:700;text-decoration:underline;white-space:nowrap">Open the redraw &rarr;</a>' : '';
     el.className='qf-ann'+(state==='open'?' open':'');
-    el.innerHTML='<div class="qf-ann-msg">'+msg+'</div><button class="x" aria-label="Dismiss">&times;</button>';
+    el.innerHTML='<div class="qf-ann-msg">'+msg+act+'</div><button class="x" aria-label="Dismiss">&times;</button>';
     el.style.display='flex';
     el.querySelector('.x').onclick=function(){ try{ localStorage.setItem(dkey,'1'); }catch(e){} el.style.display='none'; };
+    const lk=el.querySelector('.qf-open-link'); if(lk) lk.onclick=function(ev){ ev.preventDefault(); openQf(S.draw); };
   });
 }
 
@@ -1161,6 +1392,8 @@ function init(){
   $('rName').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
   $('rCode').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
   renderQfBanner();
+  $('qfClose').onclick=closeQf;
+  document.querySelectorAll('.qf-dt').forEach(t=>t.onclick=()=>qfSetDraw(t.dataset.d));
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.pg));
   document.querySelectorAll('.draw').forEach(b=>b.onclick=()=>setDraw(b.dataset.draw));
   document.querySelectorAll('.lbtab').forEach(t=>t.onclick=()=>setLb(t.dataset.lb));
