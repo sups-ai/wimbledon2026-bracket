@@ -58,16 +58,19 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .credit{text-align:center;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--faint);padding:22px 0 8px}
 /* Split gate + QF redraw announcement */
 .gate-inner-wide{max-width:760px}
+.gate-inner-wide .gate-sub{max-width:none}
 .gate-split{margin-top:28px;display:flex;align-items:stretch;gap:0}
-.gate-col{flex:1;min-width:0}
+.gate-col{flex:1;min-width:0;display:flex;flex-direction:column}
 .gate-coltitle{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--royal)}
 .gate-colsub{font-size:12.5px;font-weight:500;color:var(--soft);margin-top:7px;line-height:1.5;min-height:36px}
-.gate-col .gate-form{margin-top:15px}
+.gate-col .gate-form{margin-top:15px;flex:1}
+.gate-col .gerr{margin-top:auto}
 .gate-div{width:1px;background:var(--line);margin:2px 32px 0;flex:none;align-self:stretch}
 .qf-ann{border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;font-weight:500;background:var(--royal-soft);border:1px solid #D9CBEF;color:var(--royal);display:flex;align-items:flex-start;gap:9px}
 .qf-ann.open{background:var(--grass-soft);border-color:#C6E2CF;color:var(--grass-deep)}
-.qf-ann b{font-weight:700}
-.qf-ann .x{margin-left:auto;background:none;border:none;color:inherit;font-size:16px;line-height:1;cursor:pointer;opacity:.55;padding:0 1px}
+.qf-ann-msg{flex:1;min-width:0}
+.qf-ann-msg b{display:block;font-weight:700;margin-bottom:1px}
+.qf-ann .x{background:none;border:none;color:inherit;font-size:16px;line-height:1;cursor:pointer;opacity:.55;padding:0 1px;flex:none}
 .qf-ann .x:hover{opacity:1}
 #qfGateBanner{margin:0 0 22px}
 .qf-appbanner{max-width:1180px;margin:12px auto 0;padding:0 18px}
@@ -1063,7 +1066,7 @@ function renderQfBanner(){
     let dismissed=false; try{ dismissed=localStorage.getItem(dkey)==='1'; }catch(e){}
     if(!state || dismissed){ el.style.display='none'; return; }
     el.className='qf-ann'+(state==='open'?' open':'');
-    el.innerHTML=msg+'<button class="x" aria-label="Dismiss">&times;</button>';
+    el.innerHTML='<div class="qf-ann-msg">'+msg+'</div><button class="x" aria-label="Dismiss">&times;</button>';
     el.style.display='flex';
     el.querySelector('.x').onclick=function(){ try{ localStorage.setItem(dkey,'1'); }catch(e){} el.style.display='none'; };
   });
