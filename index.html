@@ -27,10 +27,10 @@ body{font-family:var(--ui);background:var(--paper);color:var(--ink);-webkit-font
 button{font-family:var(--ui)}
 
 /* GATE */
-.gate{position:fixed;inset:0;z-index:300;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:28px;overflow:hidden;transition:opacity .5s ease,visibility .5s}
+.gate{position:fixed;inset:0;z-index:300;background:var(--paper);display:flex;align-items:flex-start;justify-content:center;padding:28px;overflow-y:auto;transition:opacity .5s ease,visibility .5s}
 .gate.gone{opacity:0;visibility:hidden;pointer-events:none}
 .gate-grid{position:absolute;inset:0;pointer-events:none}
-.gate-inner{position:relative;width:100%;max-width:392px}
+.gate-inner{position:relative;width:100%;max-width:392px;margin:auto 0}
 .gate-eyebrow{font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--royal)}
 .accent-line{width:42px;height:3px;border-radius:3px;margin:18px 0 16px;background:linear-gradient(90deg,var(--grass),var(--royal) 55%,var(--gold))}
 .gate-title{font-family:var(--disp);font-weight:700;font-size:clamp(46px,14vw,62px);line-height:.92;color:var(--ink)}
@@ -56,7 +56,27 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .pw-toggle{position:absolute;right:6px;background:none;border:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grass);cursor:pointer;padding:8px 8px}
 .pw-toggle:hover{opacity:.7}
 .credit{text-align:center;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--faint);padding:22px 0 8px}
-.gate .credit{position:absolute;bottom:16px;left:0;right:0;padding:0}
+/* Split gate + QF redraw announcement */
+.gate-inner-wide{max-width:760px}
+.gate-split{margin-top:28px;display:flex;align-items:stretch;gap:0}
+.gate-col{flex:1;min-width:0}
+.gate-coltitle{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--royal)}
+.gate-colsub{font-size:12.5px;font-weight:500;color:var(--soft);margin-top:7px;line-height:1.5;min-height:36px}
+.gate-col .gate-form{margin-top:15px}
+.gate-div{width:1px;background:var(--line);margin:2px 32px 0;flex:none;align-self:stretch}
+.qf-ann{border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;font-weight:500;background:var(--royal-soft);border:1px solid #D9CBEF;color:var(--royal);display:flex;align-items:flex-start;gap:9px}
+.qf-ann.open{background:var(--grass-soft);border-color:#C6E2CF;color:var(--grass-deep)}
+.qf-ann b{font-weight:700}
+.qf-ann .x{margin-left:auto;background:none;border:none;color:inherit;font-size:16px;line-height:1;cursor:pointer;opacity:.55;padding:0 1px}
+.qf-ann .x:hover{opacity:1}
+#qfGateBanner{margin:0 0 22px}
+.qf-appbanner{max-width:1180px;margin:12px auto 0;padding:0 18px}
+@media(max-width:640px){
+  .gate-inner-wide{max-width:392px}
+  .gate-split{flex-direction:column}
+  .gate-div{width:auto;height:1px;margin:24px 0}
+  .gate-colsub{min-height:0}
+}
 .admin{position:fixed;inset:0;z-index:300;background:var(--paper);display:none;align-items:flex-start;justify-content:center;padding:42px 28px;overflow-y:auto}
 .admin.show{display:flex}
 .admin-inner{position:relative;width:100%;max-width:480px;padding-bottom:40px}
@@ -265,30 +285,51 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
       <path d="M210 240 H300 V440 H380"/><path d="M210 640 H300 V440"/>
     </g>
   </svg>
-  <div class="gate-inner">
+  <div class="gate-inner gate-inner-wide">
+    <div class="qf-ann" id="qfGateBanner" style="display:none"></div>
     <div class="gate-eyebrow" id="gEyebrow">ITHF · Emerging Leaders Council</div>
     <div class="accent-line"></div>
     <h1 class="gate-title">Wimbledon<span class="yr">'26</span></h1>
     <div class="gate-label">Bracket Challenge</div>
-    <p class="gate-sub">Pick winners through the champion for both the ATP &amp; WTA draws. Picks open Fri June 26 and lock Mon June 29 at 6 AM ET.</p>
-    <div class="gate-form">
-      <div class="pw-wrap">
-        <input class="ginput pw-input" id="gCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
-        <button type="button" class="pw-toggle" id="pwToggle">Show</button>
+    <p class="gate-sub">Pick winners through the champion for both the ATP &amp; WTA draws. The challenge opened Friday June 26 and picks locked Monday June 29 at 6 AM ET.</p>
+    <div class="gate-split">
+      <div class="gate-col">
+        <div class="gate-coltitle">First time here</div>
+        <p class="gate-colsub">Enter your invite code to start a new bracket.</p>
+        <div class="gate-form">
+          <div class="pw-wrap">
+            <input class="ginput pw-input" id="gCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <button type="button" class="pw-toggle" id="pwToggle">Show</button>
+          </div>
+          <div class="hidden-fields" id="moreFields">
+            <input class="ginput" id="gName" type="text" placeholder="Full name" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <select class="ginput" id="gRole">
+              <option value="" disabled selected>Role / affiliation</option>
+            </select>
+          </div>
+          <div class="gerr" id="gErr"></div>
+          <button class="genter" id="gBtn">Continue</button>
+        </div>
       </div>
-      <div class="hidden-fields" id="moreFields">
-        <input class="ginput" id="gName" type="text" placeholder="Full name" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore />
-        <select class="ginput" id="gRole">
-          <option value="" disabled selected>Role / affiliation</option>
-        </select>
+      <div class="gate-div"></div>
+      <div class="gate-col">
+        <div class="gate-coltitle">Returning</div>
+        <p class="gate-colsub">Already have a bracket? Enter your name and code to reopen it.</p>
+        <div class="gate-form">
+          <input class="ginput" id="rName" type="text" placeholder="Full name (as entered)" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore />
+          <div class="pw-wrap">
+            <input class="ginput pw-input" id="rCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <button type="button" class="pw-toggle" id="rPwToggle">Show</button>
+          </div>
+          <div class="gerr" id="rErr"></div>
+          <button class="genter" id="rBtn">Open my bracket</button>
+        </div>
       </div>
-      <div class="gerr" id="gErr"></div>
-      <button class="genter" id="gBtn">Continue</button>
     </div>
     <div class="demo-tag" id="demoTag">Demo mode · sample draw · entries are not saved.</div>
     <div class="gfoot">Access restricted to ITHF staff, board &amp; ELC members. Contact the ELC for your invite code.</div>
+    <div class="credit">downtheline™</div>
   </div>
-  <div class="credit">downtheline™</div>
 </div>
 
 <!-- ADMIN -->
@@ -332,6 +373,8 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
       <button class="tab" data-pg="rules">Rules</button>
     </nav>
   </header>
+
+  <div class="qf-appbanner"><div class="qf-ann" id="qfAppBanner" style="display:none"></div></div>
 
   <!-- BRACKET PAGE -->
   <div class="pg on" id="pg-bracket">
@@ -383,8 +426,10 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
         <tr><td>Final</td><td>320</td></tr>
         <tr><td>Correct champion (bonus)</td><td>+320</td></tr>
       </table>
-      <div class="rl-h">Deadlines &amp; redraw</div>
-      <p class="rl-p">Picks lock Monday June 29 at 6 AM ET, when first-round play begins. You get one optional redraw during Middle Sunday (opens July 5, closes July 6 before the Round of 16) to rewrite your Round of 16, Quarterfinal, Semifinal and Final picks — at a cost of 100 points.</p>
+      <div class="rl-h">Quarterfinal redraw &amp; late entry</div>
+      <p class="rl-p">Picks lock Monday June 29 at 6 AM ET, when first-round play begins. Once the Round of 16 is complete, a quarterfinal window opens — Monday July 6 in the evening, closing Tuesday July 7 at 6 AM ET, before quarterfinal play. During that window you can <b>redraw</b>: re-pick the quarterfinals through the final for 100 points, keeping everything you scored through the Round of 16. New players can also <b>join late</b> for the quarterfinals onward, starting at −100 points and completing all remaining picks to be scored. Each draw (ATP and WTA) is separate, and if you do nothing your original bracket stands. Redrawn brackets and late entries are marked on the leaderboard.</p>
+      <div class="rl-h">Tiebreaker</div>
+      <p class="rl-p">If two entries finish level on points, the first tiebreak is the closest guess to the number of games in the final set of the championship match (possible values: 6, 7, 8, 9, 10, 12, or 13). If still level, it goes to the total number of matches picked correctly. Standings are never broken by when you entered.</p>
       <div class="rl-note"><b>Results update automatically.</b> Once the draw is published and matches begin, winners and scores refresh on their own throughout the fortnight.</div>
       <div class="credit">downtheline™</div>
     </div>
@@ -571,6 +616,7 @@ function renderHeader(){
   $('lockstrip').innerHTML = picksLocked()
     ? 'Picks are <strong>locked</strong>'
     : (cd?('Picks lock in <strong>'+cd+'</strong>'):'Picks lock soon');
+  renderQfBanner();
 }
 function renderBracket(){
   const draw=S.draw, wrap=$('bracketWrap'); wrap.innerHTML='';
@@ -967,6 +1013,62 @@ async function gateStep(){
   render(); renderLeaderboard();
 }
 
+/* Returning entrant: exact-name + code, matched case/space-insensitively via normName.
+   Purely additive — resolves the code through the existing flow, then loads the
+   matching entry's stored name/role/picks so downstream exact-match logic still works. */
+async function returningStep(){
+  const err=$('rErr'), btn=$('rBtn');
+  const name=$('rName').value.trim(), code=$('rCode').value.trim();
+  if(!code){ err.textContent='Enter your bracket invite code.'; return; }
+  if(!name){ err.textContent='Enter the name you entered with.'; return; }
+  btn.disabled=true; const prev=btn.textContent; btn.textContent='Finding…';
+  const b=await resolveCode(code);
+  if(!b){ btn.disabled=false; btn.textContent=prev; err.textContent='Invalid or inactive code. Contact your bracket admin.'; return; }
+  S.bracket=b; S.passcode=code; applyBracketTheme(b);
+  if(!DEMO){ try{ await loadData(); }catch(e){} }
+  const target=normName(name);
+  const mine=(S.leaderboard||[]).filter(e=>normName(e.name)===target);
+  if(!mine.length){
+    btn.disabled=false; btn.textContent=prev;
+    err.textContent='No bracket found under that name — check spelling, or start as a new entry.';
+    return;
+  }
+  S.user=mine[0].name;                 // canonical stored name (keeps exact-match rehydration working)
+  S.role=mine[0].role||'';
+  try{ localStorage.setItem('w26_user',S.user); localStorage.setItem('w26_role',S.role); }catch(e){}
+  mine.forEach(e=>{ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks) S.picks[dr]=Object.assign(blankPicks(),e.picks); });
+  err.textContent='';
+  $('gate').classList.add('gone'); $('app').classList.add('in');
+  render(); renderLeaderboard();
+}
+
+/* QF redraw announcement banner — date-gated: coming-soon → open → hidden.
+   Dates are hardcoded to the agreed QF window for now; when the QF-redraw bundle
+   ships it will read S.tournament (RedrawOpen / RedrawDeadline) instead. */
+function qfBannerState(){
+  const o=new Date('2026-07-06T22:00:00Z');   // Mon 6 Jul eve — after R16 completes
+  const c=new Date('2026-07-07T10:00:00Z');   // Tue 7 Jul, 6 AM ET / 11 AM London
+  const n=new Date();
+  if(n>c) return null;
+  return n>=o ? 'open' : 'soon';
+}
+function renderQfBanner(){
+  const state=qfBannerState();
+  const msg = state==='open'
+    ? '<b>QF redraw is open.</b> Existing players can re-pick the final 8, and new players can join — 100 pts either way. Closes Tue 7 Jul, 6 AM ET.'
+    : '<b>QF redraw opens Mon 6 Jul.</b> Existing players can re-pick the final 8, and new players can join — 100 pts either way. Closes Tue 7 Jul, 6 AM ET.';
+  ['qfGateBanner','qfAppBanner'].forEach(function(id){
+    const el=$(id); if(!el) return;
+    const dkey='qfDismiss_'+state;
+    let dismissed=false; try{ dismissed=localStorage.getItem(dkey)==='1'; }catch(e){}
+    if(!state || dismissed){ el.style.display='none'; return; }
+    el.className='qf-ann'+(state==='open'?' open':'');
+    el.innerHTML=msg+'<button class="x" aria-label="Dismiss">&times;</button>';
+    el.style.display='flex';
+    el.querySelector('.x').onclick=function(){ try{ localStorage.setItem(dkey,'1'); }catch(e){} el.style.display='none'; };
+  });
+}
+
 /* ════════ Admin screen ════════ */
 async function adminUnlock(){
   const code=$('adminCode').value.trim(), err=$('adminErr'), btn=$('adminBtn');
@@ -1051,6 +1153,11 @@ function init(){
   $('pwToggle').onclick=()=>{ const i=$('gCode'); const shown=i.classList.toggle('reveal'); $('pwToggle').textContent=shown?'Hide':'Show'; i.focus(); };
   $('gCode').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
   $('gName').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
+  $('rBtn').onclick=returningStep;
+  $('rPwToggle').onclick=()=>{ const i=$('rCode'); const shown=i.classList.toggle('reveal'); $('rPwToggle').textContent=shown?'Hide':'Show'; i.focus(); };
+  $('rName').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
+  $('rCode').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
+  renderQfBanner();
   document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setTab(t.dataset.pg));
   document.querySelectorAll('.draw').forEach(b=>b.onclick=()=>setDraw(b.dataset.draw));
   document.querySelectorAll('.lbtab').forEach(t=>t.onclick=()=>setLb(t.dataset.lb));
