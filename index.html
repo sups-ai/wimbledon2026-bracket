@@ -1169,6 +1169,10 @@ let toastT;
 function toast(msg,err){ const t=$('toast'); t.textContent=msg; t.classList.toggle('err',!!err); t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800); }
 
 /* ════════ Data load ════════ */
+function rehydrateFromLeaderboard(){
+  // restore this user's submitted entries (leaderboard is already scoped to this bracket)
+  (S.leaderboard||[]).forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks && !S.editing[dr]) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
+}
 async function loadData(){
   if(DEMO || !S.bracket) return;
   try{
@@ -1178,8 +1182,7 @@ async function loadData(){
     if(d.results) S.results=d.results;
     if(d.tournament) S.tournament=d.tournament;
     if(d.leaderboard) S.leaderboard=d.leaderboard;
-    // restore this user's submitted entries (leaderboard is already scoped to this bracket)
-    S.leaderboard.forEach(e=>{ if(e.name===S.user){ const dr=String(e.draw).toUpperCase(); S.submitted[dr]=true; S.redrawUsed[dr]=!!e.redrawUsed; if(e.picks && !S.editing[dr]) S.picks[dr]=Object.assign(blankPicks(),e.picks); } });
+    rehydrateFromLeaderboard();
     S.lastLoad=Date.now();
   }catch(e){ /* offline-safe */ }
 }
@@ -1233,6 +1236,7 @@ async function gateStep(){
     if(!b){ err.textContent='Invalid or inactive code. Contact your bracket admin.'; return; }
     S.bracket=b; S.passcode=code;
     applyBracketTheme(b);
+    S._prefetch = DEMO ? null : loadData();   // warm the bracket data while they fill in name/role
     err.textContent=''; more.classList.add('show'); btn.textContent='Enter challenge'; $('gName').focus(); return;
   }
   const name=$('gName').value.trim(), role=$('gRole').value;
@@ -1240,7 +1244,12 @@ async function gateStep(){
   if(!role){ err.textContent='Please select your role.'; return; }
   S.user=name; S.role=role;
   try{ localStorage.setItem('w26_user',name); localStorage.setItem('w26_role',role); }catch(e){}
-  if(!DEMO) await loadData();
+  if(!DEMO){
+    btn.disabled=true; btn.textContent='Loading…';
+    try{ await (S._prefetch || loadData()); }catch(e){}
+    S._prefetch=null;
+    rehydrateFromLeaderboard();               // S.user is set now (covers a returning name via this door)
+  }
   $('gate').classList.add('gone'); $('app').classList.add('in');
   render(); renderLeaderboard();
   if(!DEMO && picksLocked() && redrawWindowOpen() && !S.submitted.ATP && !S.submitted.WTA) openQf('ATP');
