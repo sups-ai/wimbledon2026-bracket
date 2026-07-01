@@ -69,7 +69,10 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .qf-ann{border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.5;font-weight:500;background:var(--royal-soft);border:1px solid #D9CBEF;color:var(--royal);display:flex;align-items:flex-start;gap:9px}
 .qf-ann.open{background:var(--grass-soft);border-color:#C6E2CF;color:var(--grass-deep)}
 .qf-ann-msg{flex:1;min-width:0}
-.qf-ann-msg b{display:block;font-weight:700;margin-bottom:1px}
+.qf-ann-msg b{font-weight:700}
+.qf-ann-hl{display:block;margin-bottom:4px}
+.qf-ann-bd{display:block}
+.nb{white-space:nowrap}
 .qf-ann .x{background:none;border:none;color:inherit;font-size:16px;line-height:1;cursor:pointer;opacity:.55;padding:0 1px;flex:none}
 .qf-ann .x:hover{opacity:1}
 #qfGateBanner{margin:0 0 22px}
@@ -1286,8 +1289,8 @@ function qfBannerState(){
 function renderQfBanner(){
   const state=qfBannerState();
   const msg = state==='open'
-    ? '<b>QF redraw is open.</b> Existing players can re-pick the final 8, and new players can join — 100 pts either way. Closes Tue 7 Jul, 6 AM ET.'
-    : '<b>QF redraw opens Mon 6 Jul.</b> Existing players can re-pick the final 8, and new players can join — 100 pts either way. Closes Tue 7 Jul, 6 AM ET.';
+    ? '<span class="qf-ann-hl"><b>QF redraw is open.</b></span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time. 100 points per draw. Closes before the quarterfinals begin, around <span class="nb">Tue 7 July, 6 AM ET</span>.</span>'
+    : '<span class="qf-ann-hl"><b>QF redraw opens when the <span class="nb">Round of 16</span> finishes</b>, likely <span class="nb">Mon 6 July</span>.</span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time. 100 points per draw. Closes before the quarterfinals begin, around <span class="nb">Tue 7 July, 6 AM ET</span>.</span>';
   ['qfGateBanner','qfAppBanner'].forEach(function(id){
     const el=$(id); if(!el) return;
     const dkey='qfDismiss_'+state;
