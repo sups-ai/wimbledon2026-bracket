@@ -652,7 +652,7 @@ function reconcile(draw){
 }
 function roundCount(draw,r){let c=0;const rk=ROUNDS[r].key;for(let m=1;m<=ROUNDS[r].n;m++)if(S.picks[draw][rk][m])c++;return c;}
 function roundComplete(draw,r){return roundCount(draw,r)===ROUNDS[r].n;}
-function roundUnlocked(draw,r){return r===0||roundComplete(draw,r-1);}
+function roundUnlocked(draw,r){return r===0||isSpectator(draw)||roundComplete(draw,r-1);}
 function totalPicks(draw){let c=0;ROUNDS.forEach((R,i)=>c+=roundCount(draw,i));return c;}
 // ── Name matching (must mirror Code.gs) ──
 function normName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z \-]/g,'').replace(/\s+/g,' ').trim();}
@@ -716,8 +716,12 @@ function renderBracket(){
   const bw=$('bannerWrap'); bw.innerHTML='';
   if(DEMO) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-sample"><b>Sample draw.</b> Players are placeholders — the real 2026 draw loads from the API on Fri June 26.</div>');
   if(picksLocked() && !S.submitted[draw]){
-    if(isSpectator(draw)) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked"><b>Results view.</b> You haven\u2019t entered this draw — this shows who\u2019s actually advancing. You can join when the QF redraw opens.</div>');
-    else bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
+    if(isSpectator(draw)){
+      let h='<div class="banner-in banner-locked"><span><b>Results view.</b> You haven\u2019t entered this draw — this shows who\u2019s actually advancing.';
+      if(redrawWindowOpen() && qfFieldReady(draw)){ h+=' The QF window is open — you can still join.</span><button class="mini-btn" id="qfJoinBtn">Join at the QF (−100)</button>'; }
+      else { h+=' You can join when the QF redraw opens.</span>'; }
+      bw.insertAdjacentHTML('beforeend', h+'</div>');
+    } else bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
   }
   if(S.submitted[draw]){
     if(S.editing[draw] && !picksLocked()){
@@ -738,8 +742,13 @@ function renderBracket(){
     if(oi<0 || !roundUnlocked(draw,oi)) openKey=null;
   }
   if(openKey===null || openKey===undefined){
-    for(let i=0;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){openKey=ROUNDS[i].key;break;} }
-    if(!openKey) openKey=ROUNDS[ROUNDS.length-1].key;
+    if(isSpectator(draw)){
+      let deepest=0; for(let i=0;i<ROUNDS.length;i++){ if(roundWinners(draw,ROUNDS[i].key).length) deepest=i; }
+      openKey=ROUNDS[deepest].key;
+    } else {
+      for(let i=0;i<ROUNDS.length;i++){ if(roundUnlocked(draw,i)&&!roundComplete(draw,i)){openKey=ROUNDS[i].key;break;} }
+      if(!openKey) openKey=ROUNDS[ROUNDS.length-1].key;
+    }
   }
 
   // auto-fill control (only when fully editable)
@@ -757,7 +766,8 @@ function renderBracket(){
     acc.className='acc'+(!unlocked?' locked':(isOpen?' open active':''))+(complete&&!isOpen?' collapsed-done':'');
     // header
     let stat;
-    if(!unlocked) stat='<span class="ah-stat lk">Locked</span>';
+    if(isSpectator(draw)) stat='<span class="ah-stat">'+roundWinners(draw,R.key).length+'/'+R.n+'</span>';
+    else if(!unlocked) stat='<span class="ah-stat lk">Locked</span>';
     else if(complete) stat='<span class="ah-stat done">'+cnt+'/'+R.n+'<span class="ck">✓</span></span>';
     else stat='<span class="ah-stat">'+cnt+'/'+R.n+'</span>';
     acc.innerHTML='<div class="ahead"><div class="ah-l"><span class="ah-rnd">'+R.label+'</span><span class="ah-pts">'+R.pts+' pts</span></div>'
@@ -792,11 +802,12 @@ function renderBracket(){
   });
 
   // champion card
-  const champName=S.picks[draw]['Final'][1];
+  const spec=isSpectator(draw);
+  const champName=spec?(actualWinnersCache(draw).Final[1]||null):S.picks[draw]['Final'][1];
   const cp=document.createElement('div'); cp.className='champ';
   const champObj=champName?playerObj(draw,champName):null;
-  cp.innerHTML='<div class="cl">Your champion · +'+CHAMP_BONUS+'</div><div class="ct">🏆</div>'
-    +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):'Pick your way through the draw')+'</div>';
+  cp.innerHTML='<div class="cl">'+(spec?'Champion':('Your champion · +'+CHAMP_BONUS))+'</div><div class="ct">🏆</div>'
+    +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):(spec?'To be decided':'Pick your way through the draw'))+'</div>';
   wrap.appendChild(cp);
 
   const credit=document.createElement('div'); credit.className='credit'; credit.textContent='downtheline™'; wrap.appendChild(credit);
@@ -804,6 +815,7 @@ function renderBracket(){
   // wire redraw buttons
   const eb=$('editBtn'); if(eb) eb.onclick=()=>{ S.editing[S.draw]=true; toast('Editing your picks — make changes, then re-submit before the deadline.'); renderBracket(); };
   const qob=$('qfOpenBtn'); if(qob) qob.onclick=()=>openQf(S.draw);
+  const qjb=$('qfJoinBtn'); if(qjb) qjb.onclick=()=>openQf(S.draw);
 
   // submit bar
   const sb=$('sbar'); const showBar = (!S.submitted[draw] || S.editing[draw]) && !picksLocked();
@@ -1085,9 +1097,16 @@ async function submitQf(){
   }catch(e){ btn.disabled=false; btn.textContent=prev; toast('Network error — try again.',true); }
 }
 function afterQfSave(draw){
-  // if the other draw still needs attention during the window, keep them here; else close.
+  render(); renderLeaderboard();
+  // if the OTHER draw still needs this person during the window (new joiner who hasn't
+  // done it yet, and its field is ready), switch them straight to it instead of closing.
   const other=draw==='ATP'?'WTA':'ATP';
-  closeQf(); render(); renderLeaderboard();
+  if(redrawWindowOpen() && !S.submitted[other] && qfFieldReady(other)){
+    qfSetDraw(other);
+    toast('Now pick your '+other+' quarterfinals — each draw scores separately (−100 each).');
+  } else {
+    closeQf();
+  }
 }
 
 /* ════════ Leaderboard ════════ */
@@ -1266,7 +1285,8 @@ async function gateStep(){
   }
   $('gate').classList.add('gone'); $('app').classList.add('in');
   render(); renderLeaderboard();
-  if(!DEMO && picksLocked() && redrawWindowOpen() && !S.submitted.ATP && !S.submitted.WTA) openQf('ATP');
+  // new joiners land on the results-view bracket with a "Join at the QF" CTA (see renderBracket),
+  // rather than being dropped straight into the pick screen.
 }
 
 /* Returning entrant: exact-name + code, matched case/space-insensitively via normName.
