@@ -622,6 +622,10 @@ function indexPlayers(draw){
   });
   S.players[draw]=idx;
 }
+// A viewer with no Round-1 picks of their own (brand-new or QF-late entrant) sees the
+// REAL bracket filled from results, instead of an empty pick-path.
+function isSpectator(draw){ return !DEMO && roundCount(draw,0)===0; }
+function actualWinnersCache(draw){ S._aw=S._aw||{}; if(!S._aw[draw]) S._aw[draw]=computeActualWinners(draw); return S._aw[draw]; }
 function competitors(draw,rIdx,m){
   if(rIdx===0){
     const mu=S.matchups[draw][String(m)];
@@ -629,7 +633,9 @@ function competitors(draw,rIdx,m){
     return [mu.p1?playerObj(draw,mu.p1):null, mu.p2?playerObj(draw,mu.p2):null];
   }
   const prev=ROUNDS[rIdx-1].key;
-  const a=S.picks[draw][prev][2*m-1], b=S.picks[draw][prev][2*m];
+  let a,b;
+  if(isSpectator(draw)){ const aw=actualWinnersCache(draw); a=aw[prev][2*m-1]; b=aw[prev][2*m]; }
+  else { a=S.picks[draw][prev][2*m-1]; b=S.picks[draw][prev][2*m]; }
   return [a?playerObj(draw,a):null, b?playerObj(draw,b):null];
 }
 function reconcile(draw){
@@ -709,7 +715,10 @@ function renderBracket(){
   // banners
   const bw=$('bannerWrap'); bw.innerHTML='';
   if(DEMO) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-sample"><b>Sample draw.</b> Players are placeholders — the real 2026 draw loads from the API on Fri June 26.</div>');
-  if(picksLocked() && !S.submitted[draw]) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
+  if(picksLocked() && !S.submitted[draw]){
+    if(isSpectator(draw)) bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked"><b>Results view.</b> You haven\u2019t entered this draw — this shows who\u2019s actually advancing. You can join when the QF redraw opens.</div>');
+    else bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-locked">Picks for this draw are locked — the deadline has passed.</div>');
+  }
   if(S.submitted[draw]){
     if(S.editing[draw] && !picksLocked()){
       bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-done"><span><b>Editing your '+draw+' picks.</b> Change anything, then re-submit before the deadline.</span></div>');
@@ -1124,7 +1133,11 @@ function renderLeaderboard(){
   }
   $('lbCount').textContent=rows.length+(rows.length===1?' entry':' entries');
   $('lbUpdated').textContent= S.leaderboard.length?('Updated '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})):'';
-  if(!rows.length){ body.innerHTML='<div class="lb-empty">'+(DEMO?'No standings in demo mode.':'No entries yet — be the first to submit.')+'</div>'; return; }
+  if(!rows.length){
+    const loading = !DEMO && !S.lastLoad;   // no successful data load has completed yet
+    body.innerHTML='<div class="lb-empty">'+(DEMO?'No standings in demo mode.':(loading?'Loading standings…':'No entries yet — be the first to submit.'))+'</div>';
+    return;
+  }
   body.innerHTML='';
   rows.forEach((e,i)=>{
     const me=S.user&&e.name===S.user;
@@ -1180,6 +1193,7 @@ async function loadData(){
     if(!d.success) return;
     if(d.matchups){ S.matchups=d.matchups; indexPlayers('ATP'); indexPlayers('WTA'); }
     if(d.results) S.results=d.results;
+    S._aw={};   // actual-winners cache is derived from results; recompute after a refresh
     if(d.tournament) S.tournament=d.tournament;
     if(d.leaderboard) S.leaderboard=d.leaderboard;
     rehydrateFromLeaderboard();
