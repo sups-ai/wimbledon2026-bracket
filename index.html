@@ -339,7 +339,16 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 /* leaderboard badge */
 .lb-badge{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:7px;vertical-align:middle;background:var(--royal-soft);color:var(--royal)}
 .lb-badge.newqf{background:var(--gold-soft);color:var(--gold)}
-@media(max-width:600px){.qfr,.qf-h{flex:0 0 66vw;min-width:190px}.qf-body{padding-left:12px;padding-right:12px}}
+@media(max-width:600px){
+  .qf-heads{display:none}
+  .qf-bracket{flex-direction:column;min-height:0;overflow-x:visible;padding:4px 0 14px}
+  .qfr{flex:none;min-width:0;width:100%;justify-content:flex-start}
+  .qfr::before{content:attr(data-round);display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--royal);text-align:center;margin:14px 0 6px}
+  .qfp{flex:none;justify-content:flex-start}
+  .qf-match{margin:8px 16px}
+  .qfr.feed .qfp::before,.qfr.feed .qfp::after,.qfr.feed .qfp .qf-match::after{display:none}
+  .qf-body{padding-left:12px;padding-right:12px}
+}
 </style>
 </head>
 <body>
@@ -1052,9 +1061,9 @@ function renderQf(){
   const mh=(rk,m)=>{ const [a,b]=qfCompetitors(draw,rk,m); return '<div class="qf-match">'+qfSlotHtml(draw,rk,m,0,a)+qfSlotHtml(draw,rk,m,1,b)+'</div>'; };
   const bracket='<div class="qf-heads"><div class="qf-h">Quarterfinals</div><div class="qf-h">Semifinals</div><div class="qf-h">Final</div></div>'
     +'<div class="qf-bracket">'
-    +'<div class="qfr feed"><div class="qfp">'+mh('QF',1)+mh('QF',2)+'</div><div class="qfp">'+mh('QF',3)+mh('QF',4)+'</div></div>'
-    +'<div class="qfr feed"><div class="qfp">'+mh('SF',1)+mh('SF',2)+'</div></div>'
-    +'<div class="qfr"><div class="qfp">'+mh('Final',1)+'</div></div>'
+    +'<div class="qfr feed" data-round="Quarterfinals"><div class="qfp">'+mh('QF',1)+mh('QF',2)+'</div><div class="qfp">'+mh('QF',3)+mh('QF',4)+'</div></div>'
+    +'<div class="qfr feed" data-round="Semifinals"><div class="qfp">'+mh('SF',1)+mh('SF',2)+'</div></div>'
+    +'<div class="qfr" data-round="Final"><div class="qfp">'+mh('Final',1)+'</div></div>'
     +'</div>';
   const champ=S.qf.picks[draw].Final[1];
   const champHtml=champ?((playerObj(draw,champ).flag?playerObj(draw,champ).flag+' ':'')+esc(champ)):'—';
