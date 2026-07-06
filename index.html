@@ -803,10 +803,12 @@ function renderBracket(){
 
   // champion card
   const spec=isSpectator(draw);
-  const champName=spec?(actualWinnersCache(draw).Final[1]||null):S.picks[draw]['Final'][1];
+  const myChamp=S.picks[draw]['Final'][1];                     // viewer's own pick (late entrants have one)
+  const champName=myChamp || (spec?(actualWinnersCache(draw).Final[1]||null):null);
+  const mine=!!myChamp;
   const cp=document.createElement('div'); cp.className='champ';
   const champObj=champName?playerObj(draw,champName):null;
-  cp.innerHTML='<div class="cl">'+(spec?'Champion':('Your champion · +'+CHAMP_BONUS))+'</div><div class="ct">🏆</div>'
+  cp.innerHTML='<div class="cl">'+(mine?('Your champion · +'+CHAMP_BONUS):'Champion')+'</div><div class="ct">🏆</div>'
     +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):(spec?'To be decided':'Pick your way through the draw'))+'</div>';
   wrap.appendChild(cp);
 
