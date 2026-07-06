@@ -51,9 +51,9 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .gfoot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.7;color:var(--soft)}
 .gfoot strong{color:var(--ink);font-weight:600}
 .pw-wrap{position:relative;display:flex;align-items:center}
-.pw-input{-webkit-text-security:disc;text-security:disc;padding-right:64px}
-.pw-input.reveal{-webkit-text-security:none;text-security:none}
-.pw-toggle{position:absolute;right:6px;background:none;border:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grass);cursor:pointer;padding:8px 8px}
+.pw-input{padding-right:64px}
+.pw-input::-ms-reveal,.pw-input::-ms-clear{display:none}
+.pw-toggle{position:absolute;right:4px;background:none;border:none;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grass);cursor:pointer;padding:10px 12px;min-height:40px;display:flex;align-items:center;-webkit-tap-highlight-color:transparent}
 .pw-toggle:hover{opacity:.7}
 .credit{text-align:center;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--faint);padding:22px 0 8px}
 /* Split gate + QF redraw announcement */
@@ -375,7 +375,7 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
         <p class="gate-colsub">Enter your invite code to start a new bracket.</p>
         <div class="gate-form">
           <div class="pw-wrap">
-            <input class="ginput pw-input" id="gCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <input class="ginput pw-input" id="gCode" type="password" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
             <button type="button" class="pw-toggle" id="pwToggle">Show</button>
           </div>
           <div class="hidden-fields" id="moreFields">
@@ -395,7 +395,7 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
         <div class="gate-form">
           <input class="ginput" id="rName" type="text" placeholder="Full name (as entered)" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" data-lpignore="true" data-1p-ignore />
           <div class="pw-wrap">
-            <input class="ginput pw-input" id="rCode" type="text" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+            <input class="ginput pw-input" id="rCode" type="password" placeholder="Invite code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
             <button type="button" class="pw-toggle" id="rPwToggle">Show</button>
           </div>
           <div class="gerr" id="rErr"></div>
@@ -419,7 +419,7 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
       <p class="gate-sub">Enter the admin code to create and manage brackets.</p>
       <div class="gate-form">
         <div class="pw-wrap">
-          <input class="ginput pw-input" id="adminCode" type="text" placeholder="Admin code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
+          <input class="ginput pw-input" id="adminCode" type="password" placeholder="Admin code" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore />
           <button type="button" class="pw-toggle" id="adminPwToggle">Show</button>
         </div>
         <div class="gerr" id="adminErr"></div>
@@ -1435,17 +1435,17 @@ function init(){
     $('gate').style.display='none';
     $('admin').classList.add('show');
     $('adminBtn').onclick=adminUnlock;
-    $('adminPwToggle').onclick=()=>{ const i=$('adminCode'); const sh=i.classList.toggle('reveal'); $('adminPwToggle').textContent=sh?'Hide':'Show'; i.focus(); };
+    $('adminPwToggle').onclick=()=>{ const i=$('adminCode'); const show=i.type==='password'; i.type=show?'text':'password'; $('adminPwToggle').textContent=show?'Hide':'Show'; try{i.focus({preventScroll:true});}catch(_){} };
     $('adminCode').addEventListener('keydown',e=>{if(e.key==='Enter')adminUnlock();});
     $('addBracketBtn').onclick=()=>openBracketEditor(null);
     return;
   }
   $('gBtn').onclick=gateStep;
-  $('pwToggle').onclick=()=>{ const i=$('gCode'); const shown=i.classList.toggle('reveal'); $('pwToggle').textContent=shown?'Hide':'Show'; i.focus(); };
+  $('pwToggle').onclick=()=>{ const i=$('gCode'); const show=i.type==='password'; i.type=show?'text':'password'; $('pwToggle').textContent=show?'Hide':'Show'; try{i.focus({preventScroll:true});}catch(_){} };
   $('gCode').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
   $('gName').addEventListener('keydown',e=>{if(e.key==='Enter')gateStep();});
   $('rBtn').onclick=returningStep;
-  $('rPwToggle').onclick=()=>{ const i=$('rCode'); const shown=i.classList.toggle('reveal'); $('rPwToggle').textContent=shown?'Hide':'Show'; i.focus(); };
+  $('rPwToggle').onclick=()=>{ const i=$('rCode'); const show=i.type==='password'; i.type=show?'text':'password'; $('rPwToggle').textContent=show?'Hide':'Show'; try{i.focus({preventScroll:true});}catch(_){} };
   $('rName').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
   $('rCode').addEventListener('keydown',e=>{if(e.key==='Enter')returningStep();});
   renderQfBanner();
