@@ -1045,7 +1045,7 @@ function qfMode(draw){ return S.submitted[draw] ? 'redraw' : 'new'; }
 function seedQfFromSubmission(draw){
   const cur=S.qf.picks[draw]||{QF:{},SF:{},Final:{}};
   const touched=Object.values(cur.QF||{}).some(Boolean)||Object.values(cur.SF||{}).some(Boolean)||Object.values(cur.Final||{}).some(Boolean);
-  if(touched || !S.submitted[draw]) return;
+  if(touched || !S.redrawUsed[draw]) return;   // only pre-fill for an actual redraw/late-entry — never the original bracket
   const src=S.picks[draw]||{};
   S.qf.picks[draw]={ QF:Object.assign({},src.QF||{}), SF:Object.assign({},src.SF||{}), Final:Object.assign({},src.Final||{}) };
   if(!S.qf.games[draw]){ const mine=(S.leaderboard||[]).find(e=>e.name===S.user && String(e.draw).toUpperCase()===draw); if(mine && mine.finalGames) S.qf.games[draw]=Number(mine.finalGames); }
