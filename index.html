@@ -1059,7 +1059,7 @@ function openQf(draw){
   document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===S.qf.draw));
   renderQf();
   // pull the latest results in the background so newly-finished QFs lock correctly, then re-render
-  if(!DEMO) loadData().then(()=>{ if($('qfScreen').classList.contains('show')){ qfReconcile(S.qf.draw); renderQf(); } }).catch(function(){});
+  if(!DEMO && Date.now()-(S.lastLoad||0)>15000) loadData().then(()=>{ if($('qfScreen').classList.contains('show')){ qfReconcile(S.qf.draw); renderQf(); } }).catch(function(){});
 }
 function closeQf(){ $('qfScreen').classList.remove('show'); }
 function qfSetDraw(d){ S.qf.draw=d; seedQfFromSubmission(d); document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===d)); renderQf(); }
@@ -1246,17 +1246,22 @@ function rehydrateFromLeaderboard(){
 }
 async function loadData(){
   if(DEMO || !S.bracket) return;
-  try{
-    const d=await apiGet('data&bracket='+encodeURIComponent(S.bracket.id));
-    if(!d.success) return;
-    if(d.matchups){ S.matchups=d.matchups; indexPlayers('ATP'); indexPlayers('WTA'); }
-    if(d.results) S.results=d.results;
-    S._aw={};   // actual-winners cache is derived from results; recompute after a refresh
-    if(d.tournament) S.tournament=d.tournament;
-    if(d.leaderboard) S.leaderboard=d.leaderboard;
-    rehydrateFromLeaderboard();
-    S.lastLoad=Date.now();
-  }catch(e){ /* offline-safe */ }
+  if(S._loading) return S._loading;                 // coalesce: overlapping calls share one fetch
+  S._loading=(async()=>{
+    try{
+      const d=await apiGet('data&bracket='+encodeURIComponent(S.bracket.id));
+      if(!d.success) return;
+      if(d.matchups){ S.matchups=d.matchups; indexPlayers('ATP'); indexPlayers('WTA'); }
+      if(d.results) S.results=d.results;
+      S._aw={};   // actual-winners cache is derived from results; recompute after a refresh
+      if(d.tournament) S.tournament=d.tournament;
+      if(d.leaderboard) S.leaderboard=d.leaderboard;
+      rehydrateFromLeaderboard();
+      S.lastLoad=Date.now();
+    }catch(e){ /* offline-safe */ }
+    finally{ S._loading=null; }
+  })();
+  return S._loading;
 }
 
 /* ════════ Demo sample draw ════════ */
@@ -1366,15 +1371,13 @@ function qfBannerState(){
   const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-07T10:00:00Z'); // Tue 7 Jul, 6 AM ET
   const n=new Date();
   if(n>=o && n<=c) return 'open';
-  if(n<o) return 'soon';
-  if(n < new Date('2026-07-08T12:00:00Z')) return 'reopen';   // closed now, reopening tonight (until 8 AM ET Wed 8 Jul)
   return null;
 }
 function renderQfBanner(){
   const state=qfBannerState();
   const msg = state==='open'
     ? '<span class="qf-ann-hl"><b>QF redraw is open.</b></span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time — 100 points per draw. Closes ahead of tomorrow’s matches, <span class="nb">8 AM ET, July 8</span>.</span>'
-    : '<span class="qf-ann-hl"><b>Due to scheduling, the QF redraw reopens tonight, after today’s matches finish</b> — roughly after <span class="nb">5 PM ET</span> (July 7).</span><span class="qf-ann-bd">It closes ahead of tomorrow’s matches, <span class="nb">8 AM ET, July 8</span>. Re-pick the final 8 or join for the first time — 100 points per draw.</span>';
+    : '';
   ['qfGateBanner','qfAppBanner'].forEach(function(id){
     const el=$(id); if(!el) return;
     const dkey='qfDismiss_v2_'+state;
