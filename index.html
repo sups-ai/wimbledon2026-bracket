@@ -320,6 +320,12 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .qf-slot.sel .qf-pick{border-color:var(--royal);background:var(--royal)}
 .qf-slot.sel .qf-pick::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
 .qf-slot.tbd .qf-pick{display:none}
+.qf-slot.locked{cursor:default}
+.qf-slot.qf-won{background:var(--grass-soft)}
+.qf-slot.qf-won .qf-nm{color:var(--grass-deep);font-weight:700}
+.qf-slot.qf-lost .qf-nm{color:var(--faint);text-decoration:line-through}
+.qf-lockmark{color:var(--grass);font-weight:700;flex-shrink:0;font-size:13px}
+.qf-decnote{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);text-align:center;padding:4px 0 6px;background:#FAFAF9;border-top:1px solid var(--line2)}
 .qf-champ{margin-top:18px;text-align:center}
 .qf-champ .ch-l{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .qf-champ .ch-n{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--ink);margin-top:4px}
@@ -1009,15 +1015,17 @@ function qfField(draw){
   return f;
 }
 function qfFieldReady(draw){ return qfField(draw).every(p=>p[0]&&p[1]); }
-// Competitors for a QF-screen match: QF from real field, SF/Final from the user's redraw picks.
+function qfDecided(draw,m){ return actualWinnersCache(draw).QF[m]||null; }   // actual QF winner if that match is already over
+// Competitors for a QF-screen match: QF from real field, SF/Final from picks (a decided QF feeds its ACTUAL winner forward).
 function qfCompetitors(draw,rk,m){
   if(rk==='QF'){ const f=qfField(draw); return f[m-1]||[null,null]; }
-  const prev=rk==='SF'?'QF':'SF';
   const p=S.qf.picks[draw];
-  return [p[prev][2*m-1]||null, p[prev][2*m]||null];
+  if(rk==='SF'){ const feed=k=> qfDecided(draw,k) || p.QF[k] || null; return [feed(2*m-1), feed(2*m)]; }
+  return [p.SF[2*m-1]||null, p.SF[2*m]||null];
 }
 function qfReconcile(draw){
   const p=S.qf.picks[draw];
+  for(let m=1;m<=4;m++){ if(qfDecided(draw,m) && p.QF[m]) delete p.QF[m]; }   // decided QFs are locked, not user-pickable
   ['SF','Final'].forEach(rk=>{
     const n=rk==='SF'?2:1;
     for(let m=1;m<=n;m++){ const pk=p[rk][m]; if(!pk) continue;
@@ -1027,7 +1035,9 @@ function qfReconcile(draw){
   });
 }
 function qfCount(draw){ const p=S.qf.picks[draw]; return Object.values(p.QF).filter(Boolean).length+Object.values(p.SF).filter(Boolean).length+Object.values(p.Final).filter(Boolean).length; }
-function qfComplete(draw){ const p=S.qf.picks[draw]; return Object.values(p.QF).filter(Boolean).length===4 && Object.values(p.SF).filter(Boolean).length===2 && Object.values(p.Final).filter(Boolean).length===1 && QF_GAMES.indexOf(Number(S.qf.games[draw]))!==-1; }
+function qfComplete(draw){ const p=S.qf.picks[draw];
+  for(let m=1;m<=4;m++){ if(!qfDecided(draw,m) && !p.QF[m]) return false; }
+  return Object.values(p.SF).filter(Boolean).length===2 && Object.values(p.Final).filter(Boolean).length===1 && QF_GAMES.indexOf(Number(S.qf.games[draw]))!==-1; }
 function qfMode(draw){ return S.submitted[draw] ? 'redraw' : 'new'; }
 
 function openQf(draw){
@@ -1041,11 +1051,13 @@ function qfSetDraw(d){ S.qf.draw=d; document.querySelectorAll('.qf-dt').forEach(
 function qfPick(draw,rk,m,name){ S.qf.picks[draw][rk][m]=name; qfReconcile(draw); renderQf(); }
 function qfSetGames(draw,v){ S.qf.games[draw]=v; renderQf(); }
 
-function qfSlotHtml(draw,rk,m,side,name){
+function qfSlotHtml(draw,rk,m,side,name,lockWinner){
   if(!name) return '<div class="qf-slot tbd"><span class="qf-seed"></span><span class="qf-nm">TBD</span><span class="qf-pick"></span></div>';
   const po=playerObj(draw,name); const sel=S.qf.picks[draw][rk][m]===name;
   const seed=po.seed?('<span class="qf-seed">'+esc(po.seed)+'</span>'):'<span class="qf-seed"></span>';
   const flag=po.flag?('<span class="qf-flag">'+po.flag+'</span>'):'<span class="qf-flag"></span>';
+  if(lockWinner){ const won=namesMatch(lockWinner,name);
+    return '<div class="qf-slot locked '+(won?'qf-won':'qf-lost')+'">'+seed+flag+'<span class="qf-nm">'+esc(name)+'</span>'+(won?'<span class="qf-lockmark">✓</span>':'<span class="qf-pick"></span>')+'</div>'; }
   return '<div class="qf-slot'+(sel?' sel':'')+'" data-rk="'+rk+'" data-m="'+m+'" data-nm="'+escAttr(name)+'">'+seed+flag+'<span class="qf-nm">'+esc(name)+'</span><span class="qf-pick"></span></div>';
 }
 function renderQf(){
@@ -1058,7 +1070,7 @@ function renderQf(){
   if(!redrawWindowOpen()){ body.innerHTML='<div class="qf-wait">The QF window isn\u2019t open right now.</div>'; $('qfSaveBar').style.display='none'; return; }
   if(!qfFieldReady(draw)){ body.innerHTML='<div class="qf-wait">Waiting for the Round of 16 to finish — the quarterfinal field isn\u2019t set yet.</div>'; $('qfSaveBar').style.display='none'; return; }
 
-  const mh=(rk,m)=>{ const [a,b]=qfCompetitors(draw,rk,m); return '<div class="qf-match">'+qfSlotHtml(draw,rk,m,0,a)+qfSlotHtml(draw,rk,m,1,b)+'</div>'; };
+  const mh=(rk,m)=>{ const [a,b]=qfCompetitors(draw,rk,m); const lock=rk==='QF'?qfDecided(draw,m):null; return '<div class="qf-match'+(lock?' decided':'')+'">'+qfSlotHtml(draw,rk,m,0,a,lock)+qfSlotHtml(draw,rk,m,1,b,lock)+(lock?'<div class="qf-decnote">Result — locked, no points</div>':'')+'</div>'; };
   const bracket='<div class="qf-heads"><div class="qf-h">Quarterfinals</div><div class="qf-h">Semifinals</div><div class="qf-h">Final</div></div>'
     +'<div class="qf-bracket">'
     +'<div class="qfr feed" data-round="Quarterfinals"><div class="qfp">'+mh('QF',1)+mh('QF',2)+'</div><div class="qfp">'+mh('QF',3)+mh('QF',4)+'</div></div>'
@@ -1077,12 +1089,13 @@ function renderQf(){
     +'<div class="qf-tb-h">If you tie on points, the closest guess wins (then most matches called correctly). A final set can\u2019t end 6\u20135, so 11 isn\u2019t possible.</div>'
     +'<div class="qf-games">'+games+'</div></div>';
 
-  body.querySelectorAll('.qf-slot:not(.tbd)').forEach(s=>{ s.onclick=()=>qfPick(draw,s.dataset.rk,Number(s.dataset.m),s.dataset.nm); });
+  body.querySelectorAll('.qf-slot:not(.tbd):not(.locked)').forEach(s=>{ s.onclick=()=>qfPick(draw,s.dataset.rk,Number(s.dataset.m),s.dataset.nm); });
   body.querySelectorAll('.qf-game').forEach(g=>{ g.onclick=()=>qfSetGames(draw,Number(g.dataset.g)); });
 
   const bar=$('qfSaveBar'); bar.style.display='flex';
+  const decided=[1,2,3,4].filter(m=>qfDecided(draw,m)).length, need=7-decided;
   const done=qfComplete(draw), n=Object.values(S.qf.picks[draw].QF).filter(Boolean).length+Object.values(S.qf.picks[draw].SF).filter(Boolean).length+Object.values(S.qf.picks[draw].Final).filter(Boolean).length;
-  $('qfSaveMsg').innerHTML='<b>'+n+'</b> of 7 picks'+(S.qf.games[draw]?' · tiebreak set':' · tiebreak needed')+' · '+draw;
+  $('qfSaveMsg').innerHTML='<b>'+n+'</b> of '+need+' picks'+(decided?' · '+decided+' QF locked':'')+(S.qf.games[draw]?' · tiebreak set':' · tiebreak needed')+' · '+draw;
   const btn=$('qfSaveBtn'); btn.disabled=!done;
   btn.textContent=(mode==='new'?'Join at QF':'Save redraw')+' (−100)';
   btn.onclick=()=>submitQf();
