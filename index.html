@@ -1040,14 +1040,27 @@ function qfComplete(draw){ const p=S.qf.picks[draw];
   return Object.values(p.SF).filter(Boolean).length===2 && Object.values(p.Final).filter(Boolean).length===1 && QF_GAMES.indexOf(Number(S.qf.games[draw]))!==-1; }
 function qfMode(draw){ return S.submitted[draw] ? 'redraw' : 'new'; }
 
+// When reopening a redraw/late entry that's already been submitted, pre-fill the screen with
+// those picks (they're already against the actual field). Won't clobber in-session edits.
+function seedQfFromSubmission(draw){
+  const cur=S.qf.picks[draw]||{QF:{},SF:{},Final:{}};
+  const touched=Object.values(cur.QF||{}).some(Boolean)||Object.values(cur.SF||{}).some(Boolean)||Object.values(cur.Final||{}).some(Boolean);
+  if(touched || !S.submitted[draw]) return;
+  const src=S.picks[draw]||{};
+  S.qf.picks[draw]={ QF:Object.assign({},src.QF||{}), SF:Object.assign({},src.SF||{}), Final:Object.assign({},src.Final||{}) };
+  if(!S.qf.games[draw]){ const mine=(S.leaderboard||[]).find(e=>e.name===S.user && String(e.draw).toUpperCase()===draw); if(mine && mine.finalGames) S.qf.games[draw]=Number(mine.finalGames); }
+  qfReconcile(draw);
+}
 function openQf(draw){
-  S.qf.draw=draw||S.qf.draw||'ATP';
+  draw=draw||S.qf.draw||'ATP';
+  S.qf.draw=draw;
+  seedQfFromSubmission(draw);
   $('qfScreen').classList.add('show');
   document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===S.qf.draw));
   renderQf();
 }
 function closeQf(){ $('qfScreen').classList.remove('show'); }
-function qfSetDraw(d){ S.qf.draw=d; document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===d)); renderQf(); }
+function qfSetDraw(d){ S.qf.draw=d; seedQfFromSubmission(d); document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===d)); renderQf(); }
 function qfPick(draw,rk,m,name){ S.qf.picks[draw][rk][m]=name; qfReconcile(draw); renderQf(); }
 function qfSetGames(draw,v){ S.qf.games[draw]=v; renderQf(); }
 
