@@ -1363,17 +1363,19 @@ function qfBannerState(){
   const o=t.redrawOpen?new Date(t.redrawOpen):new Date('2026-07-06T22:00:00Z');   // Mon 6 Jul eve — after R16
   const c=t.redrawDeadline?new Date(t.redrawDeadline):new Date('2026-07-07T10:00:00Z'); // Tue 7 Jul, 6 AM ET
   const n=new Date();
-  if(n>c) return null;
-  return n>=o ? 'open' : 'soon';
+  if(n>=o && n<=c) return 'open';
+  if(n<o) return 'soon';
+  if(n < new Date('2026-07-08T12:00:00Z')) return 'reopen';   // closed now, reopening tonight (until 8 AM ET Wed 8 Jul)
+  return null;
 }
 function renderQfBanner(){
   const state=qfBannerState();
   const msg = state==='open'
-    ? '<span class="qf-ann-hl"><b>QF redraw is open.</b></span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time. 100 points per draw. Closes before the quarterfinals begin, around <span class="nb">Tue 7 July, 6 AM ET</span>.</span>'
-    : '<span class="qf-ann-hl"><b>QF redraw opens when the <span class="nb">Round of 16</span> finishes</b>, likely <span class="nb">Mon 6 July</span>.</span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time. 100 points per draw. Closes before the quarterfinals begin, around <span class="nb">Tue 7 July, 6 AM ET</span>.</span>';
+    ? '<span class="qf-ann-hl"><b>QF redraw is open.</b></span><span class="qf-ann-bd">Re-pick the final 8 or join for the first time — 100 points per draw. Closes ahead of tomorrow’s matches, <span class="nb">8 AM ET, July 8</span>.</span>'
+    : '<span class="qf-ann-hl"><b>Due to scheduling, the QF redraw reopens tonight, after today’s matches finish</b> — roughly after <span class="nb">5 PM ET</span> (July 7).</span><span class="qf-ann-bd">It closes ahead of tomorrow’s matches, <span class="nb">8 AM ET, July 8</span>. Re-pick the final 8 or join for the first time — 100 points per draw.</span>';
   ['qfGateBanner','qfAppBanner'].forEach(function(id){
     const el=$(id); if(!el) return;
-    const dkey='qfDismiss_'+state;
+    const dkey='qfDismiss_v2_'+state;
     let dismissed=false; try{ dismissed=localStorage.getItem(dkey)==='1'; }catch(e){}
     if(!state || dismissed){ el.style.display='none'; return; }
     const canAct = id==='qfAppBanner' && state==='open' && S.user;
