@@ -1058,6 +1058,8 @@ function openQf(draw){
   $('qfScreen').classList.add('show');
   document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===S.qf.draw));
   renderQf();
+  // pull the latest results in the background so newly-finished QFs lock correctly, then re-render
+  if(!DEMO) loadData().then(()=>{ if($('qfScreen').classList.contains('show')){ qfReconcile(S.qf.draw); renderQf(); } }).catch(function(){});
 }
 function closeQf(){ $('qfScreen').classList.remove('show'); }
 function qfSetDraw(d){ S.qf.draw=d; seedQfFromSubmission(d); document.querySelectorAll('.qf-dt').forEach(t=>t.classList.toggle('on',t.dataset.d===d)); renderQf(); }
