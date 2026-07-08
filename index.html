@@ -648,13 +648,20 @@ function competitors(draw,rIdx,m){
     return [mu.p1?playerObj(draw,mu.p1):null, mu.p2?playerObj(draw,mu.p2):null];
   }
   const prev=ROUNDS[rIdx-1].key;
+  const redrew = !DEMO && S.redrawUsed && S.redrawUsed[draw];   // redrew or joined at QF
+  const pureSpec = isSpectator(draw) && !redrew;
+  // pure spectator → actual all the way; redraw view → actual through R16 + the real QF field (rIdx<=4),
+  // then their redraw picks from the semis on; normal picker → their own picks throughout.
+  const useActual = pureSpec || (redrew && rIdx<=4);
   let a,b;
-  if(isSpectator(draw)){ const aw=actualWinnersCache(draw); a=aw[prev][2*m-1]; b=aw[prev][2*m]; }
+  if(useActual){ const aw=actualWinnersCache(draw); a=aw[prev][2*m-1]; b=aw[prev][2*m]; }
   else { a=S.picks[draw][prev][2*m-1]; b=S.picks[draw][prev][2*m]; }
   return [a?playerObj(draw,a):null, b?playerObj(draw,b):null];
 }
 function reconcile(draw){
+  const redrew = !DEMO && S.redrawUsed && S.redrawUsed[draw];
   for(let r=1;r<ROUNDS.length;r++){
+    if(redrew && r<4) continue;   // redraw view shows actual R1–R16; keep original picks (and their score) intact
     const rk=ROUNDS[r].key;
     for(let m=1;m<=ROUNDS[r].n;m++){
       const pk=S.picks[draw][rk][m]; if(!pk) continue;
@@ -667,7 +674,7 @@ function reconcile(draw){
 }
 function roundCount(draw,r){let c=0;const rk=ROUNDS[r].key;for(let m=1;m<=ROUNDS[r].n;m++)if(S.picks[draw][rk][m])c++;return c;}
 function roundComplete(draw,r){return roundCount(draw,r)===ROUNDS[r].n;}
-function roundUnlocked(draw,r){return r===0||isSpectator(draw)||roundComplete(draw,r-1);}
+function roundUnlocked(draw,r){return r===0||isSpectator(draw)||(!DEMO&&S.redrawUsed&&S.redrawUsed[draw])||roundComplete(draw,r-1);}
 function totalPicks(draw){let c=0;ROUNDS.forEach((R,i)=>c+=roundCount(draw,i));return c;}
 // ── Name matching (must mirror Code.gs) ──
 function normName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z \-]/g,'').replace(/\s+/g,' ').trim();}
@@ -742,7 +749,7 @@ function renderBracket(){
     if(S.editing[draw] && !picksLocked()){
       bw.insertAdjacentHTML('beforeend','<div class="banner-in banner-done"><span><b>Editing your '+draw+' picks.</b> Change anything, then re-submit before the deadline.</span></div>');
     } else {
-      let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> Scores update automatically.</span>';
+      let html='<div class="banner-in banner-done"><span><b>'+draw+' bracket submitted.</b> '+(S.redrawUsed[draw]?'Showing the live draw with your quarterfinal redraw picks. ':'')+'Scores update automatically.</span>';
       if(!picksLocked()) html+='<button class="mini-btn" id="editBtn">Edit picks</button>';
       if(redrawWindowOpen()) html+='<button class="mini-btn" id="qfOpenBtn">'+(S.redrawUsed[draw]?'Adjust QF redraw':'Use QF redraw')+'</button>';
       html+='</div>';
@@ -757,7 +764,7 @@ function renderBracket(){
     if(oi<0 || !roundUnlocked(draw,oi)) openKey=null;
   }
   if(openKey===null || openKey===undefined){
-    if(isSpectator(draw)){
+    if(isSpectator(draw) || (!DEMO&&S.redrawUsed&&S.redrawUsed[draw])){
       let deepest=0; for(let i=0;i<ROUNDS.length;i++){ if(roundWinners(draw,ROUNDS[i].key).length) deepest=i; }
       openKey=ROUNDS[deepest].key;
     } else {
