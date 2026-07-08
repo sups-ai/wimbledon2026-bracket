@@ -1223,11 +1223,13 @@ function openPicks(e){
     const champ=R.key==='Final';
     const pk=(e.picks&&e.picks[R.key])||{};
     const winners=Object.values((S.results[draw]&&S.results[draw][R.key])||{}).filter(Boolean);
-    let correct=0,total=0;
-    Object.values(pk).forEach(nm=>{ if(!nm)return; total++; if(winners.some(w=>namesMatch(w,nm)))correct++; });
+    let correct=0,picked=0;
+    Object.values(pk).forEach(nm=>{ if(!nm)return; picked++; if(winners.some(w=>namesMatch(w,nm)))correct++; });
+    const total = picked>0 ? R.n : 0;   // judged out of the FULL round once entered; unpicked (locked) slots count as misses. Late entrants → e.g. 0/4 not 0/2. Redrawers/normal already have full picks.
     const hasRes=winners.length>0;
     const cls=hasRes?(correct===total&&total>0?'correct':(correct>0?'':'wrong')):'';
-    rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp '+cls+'">'+(hasRes?(correct+'/'+total+' correct'):(total+' picks'))+'</span></div>';
+    const disp = picked===0 ? '—' : (hasRes ? (correct+'/'+total+' correct') : (picked+' picks'));
+    rows+='<div class="mrow"><span class="rn">'+R.label+'</span><span class="rp '+cls+'">'+disp+'</span></div>';
   });
   const champName=(e.picks&&e.picks.Final&&e.picks.Final[1])||'';
   const champFlag=champName?((playerObj(draw,champName)||{}).flag||''):'';
