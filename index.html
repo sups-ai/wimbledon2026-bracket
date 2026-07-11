@@ -200,6 +200,10 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 .slot.sel .s-nm{font-weight:700;color:var(--royal)}
 .slot.win .s-nm{color:var(--grass-deep);font-weight:700}
 .slot.out{opacity:.4} .slot.out .s-nm{text-decoration:line-through}
+.slot.sel.dead{opacity:.62;background:var(--royal-soft)}
+.slot.sel.dead .s-nm{text-decoration:line-through;color:var(--royal);font-weight:600}
+.slot.sel.dead::before{background:var(--royal);opacity:.55}
+.slot.sel.dead .s-pick{border-color:var(--royal);background:var(--royal);opacity:.6}
 .s-pick{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .14s}
 .slot.sel .s-pick{border-color:var(--royal);background:var(--royal)}
 .slot.sel .s-pick::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
@@ -647,6 +651,28 @@ function indexPlayers(draw){
 // A viewer with no Round-1 picks of their own (brand-new or QF-late entrant) sees the
 // REAL bracket filled from results, instead of an empty pick-path.
 function isSpectator(draw){ return !DEMO && roundCount(draw,0)===0; }
+// Every player who has actually LOST a match (derived from the real bracket + results).
+// Lets "My Picks" strike a dead pick even when BOTH players in a match busted — the case
+// that previously showed no signal at all.
+function eliminatedSet(draw){
+  S._elim=S._elim||{};
+  if(S._elim[draw]) return S._elim[draw];
+  const set={}, aw=actualWinnersCache(draw);
+  for(let r=0;r<ROUNDS.length;r++){
+    const rk=ROUNDS[r].key;
+    for(let m=1;m<=ROUNDS[r].n;m++){
+      const w=aw[rk][m]; if(!w) continue;                       // match not decided yet
+      let a,b;
+      if(r===0){ const mu=S.matchups[draw][String(m)]; a=mu?mu.p1:null; b=mu?mu.p2:null; }
+      else { a=aw[ROUNDS[r-1].key][2*m-1]; b=aw[ROUNDS[r-1].key][2*m]; }
+      if(a && !namesMatch(a,w)) set[a]=true;
+      if(b && !namesMatch(b,w)) set[b]=true;
+    }
+  }
+  S._elim[draw]=set; return set;
+}
+function isEliminated(draw,name){ const s=eliminatedSet(draw); if(s[name]) return true;
+  return Object.keys(s).some(n=>namesMatch(n,name)); }
 function actualWinnersCache(draw){ S._aw=S._aw||{}; if(!S._aw[draw]) S._aw[draw]=computeActualWinners(draw); return S._aw[draw]; }
 // Live Bracket view. Defaults ON, but must never engage before there are results to show,
 // and never while the person can still make picks (it's read-only — it would block picking).
@@ -664,21 +690,21 @@ function competitors(draw,rIdx,m){
   }
   const prev=ROUNDS[rIdx-1].key;
   const redrew = !DEMO && S.redrawUsed && S.redrawUsed[draw];   // redrew or joined at QF
-  const pureSpec = isSpectator(draw) && !redrew;
-  // "Actual results" view → the real tournament, every round (this is what makes the SF matchup and
-  // the Final flow from results instead of a busted pick path). Pure spectator → actual all the way.
-  // Redraw view → actual through R16 + the real QF field, then their redraw picks from the semis on.
-  // Normal picker on "My picks" → their own predicted path throughout.
-  const useActual = isActualView(draw) || pureSpec || (redrew && rIdx<=4);
+  const noEarly = isSpectator(draw);                             // no R1–R16 picks of their own
+  const pureSpec = noEarly && !redrew;
+  // Live Bracket → the real draw, every round.
+  // My Picks → the person's own predicted path. Two unavoidable exceptions:
+  //   • a late entrant has no early-round picks at all, so R2–QF fall back to the real draw;
+  //   • a redrawer's QF picks were made against the REAL quarterfinal field, so the QF round (rIdx 4)
+  //     must be fed from actual R16 winners or their picks wouldn't render. R2–R16 stay their own.
+  const useActual = isActualView(draw) || pureSpec || (noEarly && rIdx<=4) || (redrew && rIdx===4);
   let a,b;
   if(useActual){ const aw=actualWinnersCache(draw); a=aw[prev][2*m-1]; b=aw[prev][2*m]; }
   else { a=S.picks[draw][prev][2*m-1]; b=S.picks[draw][prev][2*m]; }
   return [a?playerObj(draw,a):null, b?playerObj(draw,b):null];
 }
 function reconcile(draw){
-  const redrew = !DEMO && S.redrawUsed && S.redrawUsed[draw];
   for(let r=1;r<ROUNDS.length;r++){
-    if(redrew && r<4) continue;   // redraw view shows actual R1–R16; keep original picks (and their score) intact
     const rk=ROUNDS[r].key;
     for(let m=1;m<=ROUNDS[r].n;m++){
       const pk=S.picks[draw][rk][m]; if(!pk) continue;
@@ -890,17 +916,28 @@ function slotEl(draw,rIdx,rk,m,p,winnerName,editable){
     s.innerHTML='<span class="s-sd"></span><span class="s-fl"></span><span class="s-nm">Winner to be decided</span><span class="s-pick"></span>';
     return s;
   }
-  const picked=!isActualView(draw) && S.picks[draw][rk][m]===p.name;
-  const hasRes=!!winnerName;
-  const isWin=hasRes && winnerName===p.name;
-  if(picked) s.classList.add('sel');
-  if(hasRes){ s.classList.add(isWin?'win':'out','fixed'); }
-  let resBadge='';
-  if(isWin && picked) resBadge='<span class="s-res">+'+ROUNDS[rIdx].pts+'</span>';
+  const av=isActualView(draw);
+  let resBadge='', clickable=false;
+  if(av){
+    // Live Bracket — pure reality: actual winner green, loser struck. Never shows picks.
+    const hasRes=!!winnerName, isWin=hasRes && winnerName===p.name;
+    if(hasRes) s.classList.add(isWin?'win':'out');
+    s.classList.add('fixed');
+  } else {
+    // My Picks — only the person's own picks. A pick that scored goes green with its points;
+    // a pick whose player has been eliminated is struck through in purple; otherwise it's live.
+    const picked=S.picks[draw][rk][m]===p.name;
+    const scored=picked && roundWinners(draw,rk).some(w=>namesMatch(w,p.name));
+    const dead=isEliminated(draw,p.name);
+    if(scored){ s.classList.add('win','fixed'); resBadge='<span class="s-res">+'+ROUNDS[rIdx].pts+'</span>'; }
+    else if(picked){ s.classList.add('sel'); if(dead){ s.classList.add('dead','fixed'); } }
+    else if(dead){ s.classList.add('out','fixed'); }
+    clickable = editable && !scored && !dead;
+    if(!clickable) s.classList.add('fixed');
+  }
   s.innerHTML='<span class="s-sd">'+(p.seed||'')+'</span><span class="s-fl">'+(p.flag||'')+'</span>'
     +'<span class="s-nm">'+esc(p.name)+'</span>'+resBadge+'<span class="s-pick"></span>';
-  if(editable && !hasRes){ s.onclick=()=>{ setPick(draw,rIdx,rk,m,p.name); }; }
-  else { s.classList.add('fixed'); }
+  if(clickable){ s.classList.remove('fixed'); s.onclick=()=>{ setPick(draw,rIdx,rk,m,p.name); }; }
   return s;
 }
 function setPick(draw,rIdx,rk,m,name){
@@ -1299,7 +1336,7 @@ async function loadData(){
       if(!d.success) return;
       if(d.matchups){ S.matchups=d.matchups; indexPlayers('ATP'); indexPlayers('WTA'); }
       if(d.results) S.results=d.results;
-      S._aw={};   // actual-winners cache is derived from results; recompute after a refresh
+      S._aw={}; S._elim={};   // both are derived from results; recompute after a refresh
       if(d.tournament) S.tournament=d.tournament;
       if(d.leaderboard) S.leaderboard=d.leaderboard;
       rehydrateFromLeaderboard();
