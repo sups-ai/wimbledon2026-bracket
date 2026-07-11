@@ -142,10 +142,12 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 
 /* ACCORDION */
 .wrap{max-width:1180px;margin:0 auto;padding:14px 18px 120px}
-.vtog{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#fff}
-.vtog .vt{flex:1;padding:9px 10px;font:inherit;font-size:12.5px;font-weight:700;color:var(--faint);background:transparent;border:0;cursor:pointer;transition:.15s}
-.vtog .vt.on{background:var(--royal-soft);color:var(--royal)}
-.vtog-note{font-size:11.5px;color:var(--faint);margin:-4px 0 12px;padding:0 2px;line-height:1.45}
+.vtog{display:flex;justify-content:flex-end;margin:0 0 12px}
+.vtog-in{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#F2F1EE;border:1px solid var(--line2)}
+.vtog .vt{padding:6px 14px;font:inherit;font-size:12.5px;font-weight:600;letter-spacing:.01em;color:var(--soft);background:transparent;border:0;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+.vtog .vt:hover{color:var(--ink)}
+.vtog .vt.on{background:var(--paper);color:var(--royal);box-shadow:0 1px 2px rgba(20,24,27,.07)}
+@media(max-width:380px){.vtog .vt{padding:6px 11px;font-size:12px}}
 .afill-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:11px 13px;border:1px dashed rgba(26,92,46,.35);border-radius:10px;background:var(--grass-soft)}
 .afill-bar .q{font-size:12.5px;color:var(--grass-deep);flex:1;min-width:170px}
 .afill-bar .q b{font-weight:700}
@@ -596,7 +598,7 @@ const S={
   submitted:{ATP:false,WTA:false},
   editing:{ATP:false,WTA:false},
   redrawUsed:{ATP:false,WTA:false},
-  viewActual:{ATP:false,WTA:false},   // "Actual results" bracket view (vs "My picks")
+  viewActual:{ATP:true,WTA:true},   // default view = Live Bracket (real draw); "My Picks" is the toggle
   open:{ATP:'R1',WTA:'R1'},
 };
 
@@ -646,7 +648,14 @@ function indexPlayers(draw){
 // REAL bracket filled from results, instead of an empty pick-path.
 function isSpectator(draw){ return !DEMO && roundCount(draw,0)===0; }
 function actualWinnersCache(draw){ S._aw=S._aw||{}; if(!S._aw[draw]) S._aw[draw]=computeActualWinners(draw); return S._aw[draw]; }
-function isActualView(draw){ return !DEMO && S.viewActual && S.viewActual[draw]; }
+// Live Bracket view. Defaults ON, but must never engage before there are results to show,
+// and never while the person can still make picks (it's read-only — it would block picking).
+function isActualView(draw){
+  if(DEMO) return false;
+  if(!S.viewActual || !S.viewActual[draw]) return false;
+  if(!S.submitted[draw] && !picksLocked()) return false;                    // still filling in their bracket
+  return ROUNDS.some(R=>roundWinners(draw,R.key).length>0);                 // nothing to show without results
+}
 function competitors(draw,rIdx,m){
   if(rIdx===0){
     const mu=S.matchups[draw][String(m)];
@@ -782,18 +791,18 @@ function renderBracket(){
     }
   }
 
-  // ── view toggle: "My picks" (predicted path) vs "Actual results" (the real tournament) ──
+  // ── view toggle: "Live Bracket" (the real draw, default) vs "My Picks" (predicted path) ──
   const anyRes = ROUNDS.some(R=>roundWinners(draw,R.key).length>0);
-  if(!DEMO && anyRes && !isSpectator(draw)){
+  if(!DEMO && anyRes && !isSpectator(draw) && (S.submitted[draw]||picksLocked())){
     const av=isActualView(draw);
     const vt=document.createElement('div'); vt.className='vtog';
-    vt.innerHTML='<button class="vt'+(av?'':' on')+'" data-v="picks">My picks</button>'
-      +'<button class="vt'+(av?' on':'')+'" data-v="actual">Actual results</button>';
+    vt.innerHTML='<div class="vtog-in">'
+      +'<button class="vt'+(av?' on':'')+'" data-v="actual">Live Bracket</button>'
+      +'<button class="vt'+(av?'':' on')+'" data-v="picks">My Picks</button></div>';
     vt.querySelectorAll('.vt').forEach(b=>b.onclick=()=>{
       S.viewActual[draw]=(b.dataset.v==='actual'); S.open[draw]=null; renderBracket();
     });
     wrap.appendChild(vt);
-    if(av) wrap.insertAdjacentHTML('beforeend','<div class="vtog-note">Showing the real draw — who actually advanced. Switch back to <b>My picks</b> to see your bracket.</div>');
   }
 
   // auto-fill control (only when fully editable)
