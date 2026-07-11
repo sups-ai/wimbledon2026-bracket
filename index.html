@@ -469,8 +469,8 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
   <div class="pg on" id="pg-bracket">
     <div class="subbar">
       <div class="draws">
-        <button class="draw on" data-draw="ATP"><span>ATP</span><span class="dc" id="dc-ATP">0/127</span></button>
-        <button class="draw" data-draw="WTA"><span>WTA</span><span class="dc" id="dc-WTA">0/127</span></button>
+        <button class="draw on" data-draw="WTA"><span>WTA</span><span class="dc" id="dc-WTA">0/127</span></button>
+        <button class="draw" data-draw="ATP"><span>ATP</span><span class="dc" id="dc-ATP">0/127</span></button>
       </div>
       <div class="lockstrip" id="lockstrip"></div>
     </div>
@@ -488,8 +488,8 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
   <div class="pg" id="pg-leaderboard">
     <div class="lbw">
       <div class="lbtabs">
-        <button class="lbtab on" data-lb="ATP">ATP</button>
-        <button class="lbtab" data-lb="WTA">WTA</button>
+        <button class="lbtab on" data-lb="WTA">WTA</button>
+        <button class="lbtab" data-lb="ATP">ATP</button>
         <button class="lbtab" data-lb="combined">Combined</button>
       </div>
       <div class="lb-meta"><span id="lbCount"></span><span id="lbUpdated"></span></div>
@@ -532,8 +532,8 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
     <div class="qf-hsub" id="qfSub"></div>
     <button class="qf-close" id="qfClose" aria-label="Close">&times;</button>
     <div class="qf-drawtabs">
-      <button class="qf-dt on" data-d="ATP">ATP</button>
-      <button class="qf-dt" data-d="WTA">WTA</button>
+      <button class="qf-dt on" data-d="WTA">WTA</button>
+      <button class="qf-dt" data-d="ATP">ATP</button>
     </div>
   </div>
   <div class="qf-body" id="qfBody"></div>
@@ -589,7 +589,7 @@ const CHAMP_BONUS=320, REDRAW_PENALTY=100;
 /* ════════ State ════════ */
 function blankPicks(){const o={};RKEYS.forEach(k=>o[k]={});return o;}
 const S={
-  user:null, role:null, draw:'ATP', tab:'bracket', lbView:'ATP',
+  user:null, role:null, draw:'WTA', tab:'bracket', lbView:'WTA',
   bracket:null, passcode:null, tournament:null, adminCode:null, adminBrackets:[],
   config:{}, matchups:{ATP:{},WTA:{}}, results:{ATP:{},WTA:{}}, leaderboard:[],
   players:{ATP:{},WTA:{}},
@@ -1031,7 +1031,7 @@ async function confirmSubmit(){
 }
 
 /* ════════ QF redraw / late entry (isolated surface) ════════ */
-S.qf={ draw:'ATP', picks:{ATP:{QF:{},SF:{},Final:{}},WTA:{QF:{},SF:{},Final:{}}}, games:{ATP:'',WTA:''} };
+S.qf={ draw:'WTA', picks:{ATP:{QF:{},SF:{},Final:{}},WTA:{QF:{},SF:{},Final:{}}}, games:{ATP:'',WTA:''} };
 function blankQf(){ return {QF:{},SF:{},Final:{}}; }
 const QF_GAMES=[6,7,8,9,10,12,13];
 const QF_ROUNDS=[{key:'QF',label:'Quarterfinals',n:4},{key:'SF',label:'Semifinals',n:2},{key:'Final',label:'Final',n:1}];
@@ -1096,7 +1096,7 @@ function seedQfFromSubmission(draw){
   qfReconcile(draw);
 }
 function openQf(draw){
-  draw=draw||S.qf.draw||'ATP';
+  draw=draw||S.qf.draw||'WTA';
   S.qf.draw=draw;
   seedQfFromSubmission(draw);
   $('qfScreen').classList.add('show');
