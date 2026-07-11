@@ -142,6 +142,10 @@ select.ginput{appearance:none;cursor:pointer;background-image:url("data:image/sv
 
 /* ACCORDION */
 .wrap{max-width:1180px;margin:0 auto;padding:14px 18px 120px}
+.vtog{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:#fff}
+.vtog .vt{flex:1;padding:9px 10px;font:inherit;font-size:12.5px;font-weight:700;color:var(--faint);background:transparent;border:0;cursor:pointer;transition:.15s}
+.vtog .vt.on{background:var(--royal-soft);color:var(--royal)}
+.vtog-note{font-size:11.5px;color:var(--faint);margin:-4px 0 12px;padding:0 2px;line-height:1.45}
 .afill-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:11px 13px;border:1px dashed rgba(26,92,46,.35);border-radius:10px;background:var(--grass-soft)}
 .afill-bar .q{font-size:12.5px;color:var(--grass-deep);flex:1;min-width:170px}
 .afill-bar .q b{font-weight:700}
@@ -592,6 +596,7 @@ const S={
   submitted:{ATP:false,WTA:false},
   editing:{ATP:false,WTA:false},
   redrawUsed:{ATP:false,WTA:false},
+  viewActual:{ATP:false,WTA:false},   // "Actual results" bracket view (vs "My picks")
   open:{ATP:'R1',WTA:'R1'},
 };
 
@@ -641,6 +646,7 @@ function indexPlayers(draw){
 // REAL bracket filled from results, instead of an empty pick-path.
 function isSpectator(draw){ return !DEMO && roundCount(draw,0)===0; }
 function actualWinnersCache(draw){ S._aw=S._aw||{}; if(!S._aw[draw]) S._aw[draw]=computeActualWinners(draw); return S._aw[draw]; }
+function isActualView(draw){ return !DEMO && S.viewActual && S.viewActual[draw]; }
 function competitors(draw,rIdx,m){
   if(rIdx===0){
     const mu=S.matchups[draw][String(m)];
@@ -650,9 +656,11 @@ function competitors(draw,rIdx,m){
   const prev=ROUNDS[rIdx-1].key;
   const redrew = !DEMO && S.redrawUsed && S.redrawUsed[draw];   // redrew or joined at QF
   const pureSpec = isSpectator(draw) && !redrew;
-  // pure spectator → actual all the way; redraw view → actual through R16 + the real QF field (rIdx<=4),
-  // then their redraw picks from the semis on; normal picker → their own picks throughout.
-  const useActual = pureSpec || (redrew && rIdx<=4);
+  // "Actual results" view → the real tournament, every round (this is what makes the SF matchup and
+  // the Final flow from results instead of a busted pick path). Pure spectator → actual all the way.
+  // Redraw view → actual through R16 + the real QF field, then their redraw picks from the semis on.
+  // Normal picker on "My picks" → their own predicted path throughout.
+  const useActual = isActualView(draw) || pureSpec || (redrew && rIdx<=4);
   let a,b;
   if(useActual){ const aw=actualWinnersCache(draw); a=aw[prev][2*m-1]; b=aw[prev][2*m]; }
   else { a=S.picks[draw][prev][2*m-1]; b=S.picks[draw][prev][2*m]; }
@@ -674,7 +682,7 @@ function reconcile(draw){
 }
 function roundCount(draw,r){let c=0;const rk=ROUNDS[r].key;for(let m=1;m<=ROUNDS[r].n;m++)if(S.picks[draw][rk][m])c++;return c;}
 function roundComplete(draw,r){return roundCount(draw,r)===ROUNDS[r].n;}
-function roundUnlocked(draw,r){return r===0||isSpectator(draw)||(!DEMO&&S.redrawUsed&&S.redrawUsed[draw])||roundComplete(draw,r-1);}
+function roundUnlocked(draw,r){return r===0||isActualView(draw)||isSpectator(draw)||(!DEMO&&S.redrawUsed&&S.redrawUsed[draw])||roundComplete(draw,r-1);}
 function totalPicks(draw){let c=0;ROUNDS.forEach((R,i)=>c+=roundCount(draw,i));return c;}
 // ── Name matching (must mirror Code.gs) ──
 function normName(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z \-]/g,'').replace(/\s+/g,' ').trim();}
@@ -707,6 +715,7 @@ function clientScore(draw){
 }
 /* editable: which rounds can be changed right now */
 function roundEditable(draw,rIdx){
+  if(isActualView(draw)) return false;                           // "Actual results" is a read-only view
   if(S.submitted[draw]){
     if(S.editing[draw] && !picksLocked()) return true;            // re-pick mode: all rounds editable until deadline
     return false;                                                 // QF redraw lives in its own screen (openQf)
@@ -764,7 +773,7 @@ function renderBracket(){
     if(oi<0 || !roundUnlocked(draw,oi)) openKey=null;
   }
   if(openKey===null || openKey===undefined){
-    if(isSpectator(draw) || (!DEMO&&S.redrawUsed&&S.redrawUsed[draw])){
+    if(isActualView(draw) || isSpectator(draw) || (!DEMO&&S.redrawUsed&&S.redrawUsed[draw])){
       let deepest=0; for(let i=0;i<ROUNDS.length;i++){ if(roundWinners(draw,ROUNDS[i].key).length) deepest=i; }
       openKey=ROUNDS[deepest].key;
     } else {
@@ -773,8 +782,22 @@ function renderBracket(){
     }
   }
 
+  // ── view toggle: "My picks" (predicted path) vs "Actual results" (the real tournament) ──
+  const anyRes = ROUNDS.some(R=>roundWinners(draw,R.key).length>0);
+  if(!DEMO && anyRes && !isSpectator(draw)){
+    const av=isActualView(draw);
+    const vt=document.createElement('div'); vt.className='vtog';
+    vt.innerHTML='<button class="vt'+(av?'':' on')+'" data-v="picks">My picks</button>'
+      +'<button class="vt'+(av?' on':'')+'" data-v="actual">Actual results</button>';
+    vt.querySelectorAll('.vt').forEach(b=>b.onclick=()=>{
+      S.viewActual[draw]=(b.dataset.v==='actual'); S.open[draw]=null; renderBracket();
+    });
+    wrap.appendChild(vt);
+    if(av) wrap.insertAdjacentHTML('beforeend','<div class="vtog-note">Showing the real draw — who actually advanced. Switch back to <b>My picks</b> to see your bracket.</div>');
+  }
+
   // auto-fill control (only when fully editable)
-  if((!S.submitted[draw] || S.editing[draw]) && !picksLocked()){
+  if((!S.submitted[draw] || S.editing[draw]) && !picksLocked() && !isActualView(draw)){
     const af=document.createElement('div'); af.className='afill-bar';
     af.innerHTML='<span class="q"><b>Auto-fill '+draw+':</b> advance favorites by seed & ranking, or pick at random.</span><button data-mode="fav">Favorites</button><button data-mode="random">Random</button>';
     af.querySelectorAll('button').forEach(b=>b.onclick=()=>startAutofill(draw,b.dataset.mode));
@@ -783,12 +806,15 @@ function renderBracket(){
 
   ROUNDS.forEach((R,rIdx)=>{
     const unlocked=roundUnlocked(draw,rIdx), complete=roundComplete(draw,rIdx), cnt=roundCount(draw,rIdx);
+    const av=isActualView(draw);
+    const resN=roundWinners(draw,R.key).length;
     const isOpen=(R.key===openKey)&&unlocked;
     const acc=document.createElement('div');
-    acc.className='acc'+(!unlocked?' locked':(isOpen?' open active':''))+(complete&&!isOpen?' collapsed-done':'');
+    acc.className='acc'+(!unlocked?' locked':(isOpen?' open active':''))+((av?resN===R.n:complete)&&!isOpen?' collapsed-done':'');
     // header
     let stat;
-    if(isSpectator(draw)) stat='<span class="ah-stat">'+roundWinners(draw,R.key).length+'/'+R.n+'</span>';
+    if(av) stat='<span class="ah-stat'+(resN===R.n?' done':'')+'">'+resN+'/'+R.n+(resN===R.n?'<span class="ck">✓</span>':'')+'</span>';
+    else if(isSpectator(draw)) stat='<span class="ah-stat">'+resN+'/'+R.n+'</span>';
     else if(!unlocked) stat='<span class="ah-stat lk">Locked</span>';
     else if(complete) stat='<span class="ah-stat done">'+cnt+'/'+R.n+'<span class="ck">✓</span></span>';
     else stat='<span class="ah-stat">'+cnt+'/'+R.n+'</span>';
@@ -798,10 +824,10 @@ function renderBracket(){
     else { acc.insertAdjacentHTML('beforeend','<div class="lockmsg">Complete '+ROUNDS[rIdx-1].label+' to unlock these picks.</div>'); }
 
     // summary peek (completed + collapsed)
-    if(complete&&!isOpen){
+    if((av?resN===R.n:complete)&&!isOpen){
       const sm=document.createElement('div'); sm.className='summary';
       let shown=0;
-      for(let m=1;m<=R.n&&shown<3;m++){ const nm=S.picks[draw][R.key][m]; if(!nm)continue; const p=playerObj(draw,nm);
+      for(let m=1;m<=R.n&&shown<3;m++){ const nm=av?(actualWinnersCache(draw)[R.key][m]||null):S.picks[draw][R.key][m]; if(!nm)continue; const p=playerObj(draw,nm);
         sm.insertAdjacentHTML('beforeend','<div class="srow"><span class="fl">'+(p.flag||'')+'</span><span class="nm">'+(p.seed?'<span class="sd">'+p.seed+'</span>':'')+esc(nm)+'</span><span class="ck">✓</span></div>'); shown++; }
       if(R.n>3) sm.insertAdjacentHTML('beforeend','<div class="srow more">+ '+(R.n-3)+' more pick'+(R.n-3>1?'s':'')+'</div>');
       acc.appendChild(sm);
@@ -825,13 +851,15 @@ function renderBracket(){
 
   // champion card
   const spec=isSpectator(draw);
+  const actView=isActualView(draw);
+  const actualChamp=actualWinnersCache(draw).Final[1]||null;
   const myChamp=S.picks[draw]['Final'][1];                     // viewer's own pick (late entrants have one)
-  const champName=myChamp || (spec?(actualWinnersCache(draw).Final[1]||null):null);
-  const mine=!!myChamp;
+  const champName=actView?actualChamp:(myChamp || (spec?actualChamp:null));
+  const mine=!actView && !!myChamp;
   const cp=document.createElement('div'); cp.className='champ';
   const champObj=champName?playerObj(draw,champName):null;
   cp.innerHTML='<div class="cl">'+(mine?('Your champion · +'+CHAMP_BONUS):'Champion')+'</div><div class="ct">🏆</div>'
-    +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):(spec?'To be decided':'Pick your way through the draw'))+'</div>';
+    +'<div class="cn'+(champName?'':' empty')+'">'+(champName?((champObj.flag?champObj.flag+' ':'')+esc(champName)):((spec||actView)?'To be decided':'Pick your way through the draw'))+'</div>';
   wrap.appendChild(cp);
 
   const credit=document.createElement('div'); credit.className='credit'; credit.textContent='downtheline™'; wrap.appendChild(credit);
@@ -842,7 +870,7 @@ function renderBracket(){
   const qjb=$('qfJoinBtn'); if(qjb) qjb.onclick=()=>openQf(S.draw);
 
   // submit bar
-  const sb=$('sbar'); const showBar = (!S.submitted[draw] || S.editing[draw]) && !picksLocked();
+  const sb=$('sbar'); const showBar = (!S.submitted[draw] || S.editing[draw]) && !picksLocked() && !isActualView(draw);
   sb.classList.toggle('show', showBar);
   $('pcount').textContent=totalPicks(draw);
   $('reviewBtn').disabled = totalPicks(draw)!==127;
@@ -853,7 +881,7 @@ function slotEl(draw,rIdx,rk,m,p,winnerName,editable){
     s.innerHTML='<span class="s-sd"></span><span class="s-fl"></span><span class="s-nm">Winner to be decided</span><span class="s-pick"></span>';
     return s;
   }
-  const picked=S.picks[draw][rk][m]===p.name;
+  const picked=!isActualView(draw) && S.picks[draw][rk][m]===p.name;
   const hasRes=!!winnerName;
   const isWin=hasRes && winnerName===p.name;
   if(picked) s.classList.add('sel');
